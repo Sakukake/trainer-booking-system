@@ -1,11 +1,14 @@
 "use strict";
 
 /* ========================================
-   Ver.0.7.1
-   トレーニング予約フォーム
+   Ver.0.8.0
+   お客様用トレーニング予約フォーム
+   Supabase保存対応
 ======================================== */
 
-/* ---------- 要素取得 ---------- */
+/* ========================================
+   HTML要素
+======================================== */
 
 const bookingForm =
   document.getElementById("bookingForm");
@@ -69,12 +72,19 @@ const estimatedEndElement =
     "estimatedEnd"
   );
 
+/* エラー表示 */
+
 const errorMessageElement =
   document.getElementById(
     "errorMessage"
   );
 
-/* 画面 */
+const confirmationErrorMessage =
+  document.getElementById(
+    "confirmationErrorMessage"
+  );
+
+/* 各画面 */
 
 const confirmationSection =
   document.getElementById(
@@ -84,6 +94,11 @@ const confirmationSection =
 const completedSection =
   document.getElementById(
     "completed"
+  );
+
+const reservationListSection =
+  document.getElementById(
+    "reservationListSection"
   );
 
 /* 確認画面 */
@@ -158,11 +173,6 @@ const confirmTotalElement =
     "confirmTotal"
   );
 
-const confirmationErrorMessage =
-  document.getElementById(
-    "confirmationErrorMessage"
-  );
-
 /* 完了画面 */
 
 const completedBookingIdElement =
@@ -217,24 +227,9 @@ const refreshReservationsButton =
     "refreshReservationsButton"
   );
 
-/* 予約一覧 */
-
-const reservationListSection =
-  document.getElementById(
-    "reservationListSection"
-  );
-
-const reservationListElement =
-  document.getElementById(
-    "reservationList"
-  );
-
-const emptyReservationMessage =
-  document.getElementById(
-    "emptyReservationMessage"
-  );
-
-/* ---------- 設定 ---------- */
+/* ========================================
+   設定
+======================================== */
 
 const EXTRA_TIME_FEE = 500;
 const RENTAL_GYM_FEE = 1500;
@@ -244,23 +239,20 @@ const EXTRA_TIME_START_HOUR = 21;
 
 const TIME_INTERVAL = 15;
 
-const STORAGE_KEY =
-  "trainerBookingReservationsV071";
-
-const OLD_STORAGE_KEYS = [
-  "trainerBookingReservationsV06",
-  "trainerBookingReservationsV07"
-];
-
 let pendingReservation = null;
 let isSubmitting = false;
 
-/* ---------- 共通処理 ---------- */
+/* ========================================
+   共通関数
+======================================== */
 
 function formatPrice(price) {
+  const number =
+    Number(price);
+
   const safePrice =
-    Number.isFinite(Number(price))
-      ? Number(price)
+    Number.isFinite(number)
+      ? number
       : 0;
 
   return `${safePrice.toLocaleString(
@@ -294,6 +286,63 @@ function formatDate(dateValue) {
     }
   ).format(date);
 }
+
+function normalizePhoneNumber(
+  phone
+) {
+  return phone.replace(
+    /[-ー\s　]/g,
+    ""
+  );
+}
+
+function generateBookingNumber() {
+  const now = new Date();
+
+  const year =
+    now.getFullYear();
+
+  const month =
+    String(
+      now.getMonth() + 1
+    ).padStart(2, "0");
+
+  const day =
+    String(
+      now.getDate()
+    ).padStart(2, "0");
+
+  const hours =
+    String(
+      now.getHours()
+    ).padStart(2, "0");
+
+  const minutes =
+    String(
+      now.getMinutes()
+    ).padStart(2, "0");
+
+  const seconds =
+    String(
+      now.getSeconds()
+    ).padStart(2, "0");
+
+  const random =
+    Math.random()
+      .toString(36)
+      .slice(2, 6)
+      .toUpperCase();
+
+  return (
+    `BK-${year}${month}${day}-` +
+    `${hours}${minutes}${seconds}-` +
+    random
+  );
+}
+
+/* ========================================
+   メニュー取得・料金計算
+======================================== */
 
 function getSelectedMenus() {
   return Array.from(menuInputs)
@@ -331,6 +380,16 @@ function calculateTotalDuration() {
   );
 }
 
+function calculateRentalFee() {
+  return rentalGymInput.checked
+    ? RENTAL_GYM_FEE
+    : 0;
+}
+
+/* ========================================
+   時刻計算
+======================================== */
+
 function convertTimeToMinutes(
   timeValue
 ) {
@@ -366,7 +425,7 @@ function convertMinutesToTime(
   const minutesInDay =
     24 * 60;
 
-  const adjustedMinutes =
+  const adjusted =
     (
       (
         totalMinutes %
@@ -378,11 +437,11 @@ function convertMinutesToTime(
 
   const hours =
     Math.floor(
-      adjustedMinutes / 60
+      adjusted / 60
     );
 
   const minutes =
-    adjustedMinutes % 60;
+    adjusted % 60;
 
   return (
     `${String(hours).padStart(
@@ -465,12 +524,6 @@ function calculateExtraTimeFee() {
   return 0;
 }
 
-function calculateRentalFee() {
-  return rentalGymInput.checked
-    ? RENTAL_GYM_FEE
-    : 0;
-}
-
 function calculateTotalPrice() {
   return (
     calculateMenuPrice() +
@@ -478,6 +531,10 @@ function calculateTotalPrice() {
     calculateRentalFee()
   );
 }
+
+/* ========================================
+   画面内の料金更新
+======================================== */
 
 function updateSummary() {
   menuPriceElement.textContent =
@@ -510,13 +567,17 @@ function updateSummary() {
     endTime || "未選択";
 }
 
-/* ---------- 時間選択肢 ---------- */
+/* ========================================
+   15分刻みの時間選択
+======================================== */
 
 function createTimeOptions() {
   timeInput.innerHTML = "";
 
   const defaultOption =
-    document.createElement("option");
+    document.createElement(
+      "option"
+    );
 
   defaultOption.value = "";
 
@@ -552,7 +613,9 @@ function createTimeOptions() {
           "option"
         );
 
-      option.value = timeValue;
+      option.value =
+        timeValue;
+
       option.textContent =
         timeValue;
 
@@ -563,7 +626,64 @@ function createTimeOptions() {
   }
 }
 
-/* ---------- バリデーション ---------- */
+/* ========================================
+   エラー表示
+======================================== */
+
+function clearError() {
+  if (errorMessageElement) {
+    errorMessageElement.textContent =
+      "";
+  }
+
+  if (
+    confirmationErrorMessage
+  ) {
+    confirmationErrorMessage.textContent =
+      "";
+  }
+}
+
+function showError(
+  message,
+  inputElement = null
+) {
+  if (errorMessageElement) {
+    errorMessageElement.textContent =
+      message;
+
+    errorMessageElement.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+  }
+
+  if (inputElement) {
+    inputElement.focus();
+  }
+}
+
+function showConfirmationError(
+  message
+) {
+  if (
+    !confirmationErrorMessage
+  ) {
+    return;
+  }
+
+  confirmationErrorMessage.textContent =
+    message;
+
+  confirmationErrorMessage.scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
+}
+
+/* ========================================
+   入力チェック
+======================================== */
 
 function isKatakana(text) {
   return /^[ァ-ヶー\s　]+$/.test(
@@ -571,22 +691,14 @@ function isKatakana(text) {
   );
 }
 
-function isValidPhoneNumber(text) {
-  const normalizedPhone =
-    text.replace(
-      /[-ー\s　]/g,
-      ""
-    );
+function isValidPhoneNumber(
+  text
+) {
+  const normalized =
+    normalizePhoneNumber(text);
 
   return /^\d{10,11}$/.test(
-    normalizedPhone
-  );
-}
-
-function normalizePhoneNumber(text) {
-  return text.replace(
-    /[-ー\s　]/g,
-    ""
+    normalized
   );
 }
 
@@ -628,53 +740,6 @@ function isPastDateTime() {
   );
 }
 
-function showError(
-  message,
-  inputElement = null
-) {
-  errorMessageElement.textContent =
-    message;
-
-  if (inputElement) {
-    inputElement.focus();
-  }
-
-  errorMessageElement.scrollIntoView({
-    behavior: "smooth",
-    block: "center"
-  });
-}
-
-function clearError() {
-  errorMessageElement.textContent =
-    "";
-
-  if (
-    confirmationErrorMessage
-  ) {
-    confirmationErrorMessage.textContent =
-      "";
-  }
-}
-
-function showConfirmationError(
-  message
-) {
-  if (
-    !confirmationErrorMessage
-  ) {
-    return;
-  }
-
-  confirmationErrorMessage.textContent =
-    message;
-
-  confirmationErrorMessage.scrollIntoView({
-    behavior: "smooth",
-    block: "center"
-  });
-}
-
 function validateForm() {
   const menus =
     getSelectedMenus();
@@ -690,9 +755,6 @@ function validateForm() {
 
   const email =
     emailInput.value.trim();
-
-  const duration =
-    calculateTotalDuration();
 
   if (menus.length === 0) {
     showError(
@@ -742,7 +804,9 @@ function validateForm() {
     return false;
   }
 
-  if (duration <= 0) {
+  if (
+    calculateTotalDuration() <= 0
+  ) {
     showError(
       "メニューの時間設定を確認してください。"
     );
@@ -817,230 +881,12 @@ function validateForm() {
     return false;
   }
 
-  if (
-    hasReservationConflict(
-      dateInput.value,
-      timeInput.value,
-      duration
-    )
-  ) {
-    showError(
-      "選択した時間は、すでに保存されている予約と重複しています。",
-      timeInput
-    );
-
-    return false;
-  }
-
   return true;
 }
 
-/* ---------- ローカル保存 ---------- */
-
-function loadReservations() {
-  try {
-    const savedData =
-      localStorage.getItem(
-        STORAGE_KEY
-      );
-
-    if (!savedData) {
-      return [];
-    }
-
-    const parsedData =
-      JSON.parse(savedData);
-
-    return Array.isArray(parsedData)
-      ? parsedData
-      : [];
-  } catch (error) {
-    console.error(
-      "予約データの読み込みに失敗しました。",
-      error
-    );
-
-    return [];
-  }
-}
-
-function saveReservations(
-  reservations
-) {
-  try {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(reservations)
-    );
-
-    return true;
-  } catch (error) {
-    console.error(
-      "予約データの保存に失敗しました。",
-      error
-    );
-
-    return false;
-  }
-}
-
-function migrateOldReservations() {
-  try {
-    const currentData =
-      localStorage.getItem(
-        STORAGE_KEY
-      );
-
-    if (currentData) {
-      return;
-    }
-
-    for (
-      const oldKey of OLD_STORAGE_KEYS
-    ) {
-      const oldData =
-        localStorage.getItem(
-          oldKey
-        );
-
-      if (!oldData) {
-        continue;
-      }
-
-      const parsedData =
-        JSON.parse(oldData);
-
-      if (
-        Array.isArray(parsedData)
-      ) {
-        localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify(
-            parsedData
-          )
-        );
-
-        return;
-      }
-    }
-  } catch (error) {
-    console.error(
-      "過去の予約データ移行に失敗しました。",
-      error
-    );
-  }
-}
-
-function generateBookingId() {
-  const now = new Date();
-
-  const datePart = [
-    now.getFullYear(),
-
-    String(
-      now.getMonth() + 1
-    ).padStart(2, "0"),
-
-    String(
-      now.getDate()
-    ).padStart(2, "0")
-  ].join("");
-
-  const timePart = [
-    String(
-      now.getHours()
-    ).padStart(2, "0"),
-
-    String(
-      now.getMinutes()
-    ).padStart(2, "0"),
-
-    String(
-      now.getSeconds()
-    ).padStart(2, "0")
-  ].join("");
-
-  const randomPart =
-    Math.random()
-      .toString(36)
-      .slice(2, 6)
-      .toUpperCase();
-
-  return (
-    `BK-${datePart}-` +
-    `${timePart}-${randomPart}`
-  );
-}
-
-/* ---------- 重複予約判定 ---------- */
-
-function hasReservationConflict(
-  date,
-  startTime,
-  duration
-) {
-  const newStart =
-    convertTimeToMinutes(
-      startTime
-    );
-
-  const safeDuration =
-    Number(duration);
-
-  if (
-    newStart === null ||
-    !Number.isFinite(
-      safeDuration
-    ) ||
-    safeDuration <= 0
-  ) {
-    return false;
-  }
-
-  const newEnd =
-    newStart + safeDuration;
-
-  return loadReservations().some(
-    (reservation) => {
-      if (
-        reservation.date !== date
-      ) {
-        return false;
-      }
-
-      const existingStart =
-        convertTimeToMinutes(
-          reservation.startTime
-        );
-
-      const existingDuration =
-        Number(
-          reservation.duration
-        );
-
-      if (
-        existingStart === null ||
-        !Number.isFinite(
-          existingDuration
-        ) ||
-        existingDuration <= 0
-      ) {
-        return false;
-      }
-
-      const existingEnd =
-        existingStart +
-        existingDuration;
-
-      return (
-        newStart < existingEnd &&
-        newEnd > existingStart
-      );
-    }
-  );
-}
-
-/* ---------- 予約データ作成 ---------- */
+/* ========================================
+   予約データ作成
+======================================== */
 
 function createReservationFromForm() {
   const menus =
@@ -1056,16 +902,13 @@ function createReservationFromForm() {
     calculateRentalFee();
 
   return {
-    id:
-      generateBookingId(),
+    bookingNumber:
+      generateBookingNumber(),
 
     menus:
       menus.map(
         (menu) => menu.name
       ),
-
-    menuDetails:
-      menus,
 
     date:
       dateInput.value,
@@ -1091,7 +934,9 @@ function createReservationFromForm() {
       ),
 
     email:
-      emailInput.value.trim(),
+      emailInput.value
+        .trim()
+        .toLowerCase(),
 
     rentalGym:
       rentalGymInput.checked,
@@ -1106,14 +951,13 @@ function createReservationFromForm() {
     totalPrice:
       menuPrice +
       extraTimePrice +
-      rentalPrice,
-
-    createdAt:
-      new Date().toISOString()
+      rentalPrice
   };
 }
 
-/* ---------- 確認画面 ---------- */
+/* ========================================
+   確認画面
+======================================== */
 
 function displayConfirmation(
   reservation
@@ -1194,13 +1038,15 @@ function displayConfirmation(
   });
 }
 
-/* ---------- 完了画面 ---------- */
+/* ========================================
+   完了画面
+======================================== */
 
 function displayCompleted(
   reservation
 ) {
   completedBookingIdElement.textContent =
-    reservation.id;
+    reservation.bookingNumber;
 
   completedDateTimeElement.textContent =
     `${formatDate(
@@ -1237,256 +1083,93 @@ function displayCompleted(
   });
 }
 
-/* ---------- 予約一覧 ---------- */
+/* ========================================
+   Supabaseへ保存
+======================================== */
 
-function createReservationCard(
+async function saveReservationToSupabase(
   reservation
 ) {
-  const card =
-    document.createElement(
-      "article"
+  if (
+    typeof supabaseClient ===
+    "undefined"
+  ) {
+    throw new Error(
+      "Supabase接続設定が読み込まれていません。"
     );
+  }
 
-  card.className =
-    "reservation-card";
-
-  const idBadge =
-    document.createElement(
-      "span"
-    );
-
-  idBadge.className =
-    "reservation-id";
-
-  idBadge.textContent =
-    reservation.id;
-
-  const title =
-    document.createElement(
-      "h3"
-    );
-
-  title.textContent =
-    `${formatDate(
-      reservation.date
-    )} ` +
-    `${reservation.startTime}` +
-    `〜${reservation.endTime}`;
-
-  const details =
-    document.createElement(
-      "dl"
-    );
-
-  const rows = [
-    [
-      "お名前",
-      reservation.name
-    ],
-    [
-      "フリガナ",
-      reservation.kana
-    ],
-    [
-      "メニュー",
-      Array.isArray(
-        reservation.menus
-      )
-        ? reservation.menus.join(
-            "、"
-          )
-        : "未設定"
-    ],
-    [
-      "合計時間",
-      `${reservation.duration}分`
-    ],
-    [
-      "メニュー料金",
-      formatPrice(
-        reservation.menuPrice ??
-          reservation.totalPrice
-      )
-    ],
-    [
-      "時間外料金",
-      formatPrice(
-        reservation.extraTimePrice ??
-          0
-      )
-    ],
-    [
-      "レンタルジム料金",
-      formatPrice(
-        reservation.rentalPrice ??
-          (
-            reservation.rentalGym
-              ? RENTAL_GYM_FEE
-              : 0
-          )
-      )
-    ],
-    [
-      "合計金額",
-      formatPrice(
-        reservation.totalPrice
-      )
-    ],
-    [
-      "レンタルジム",
+  const memoLines = [
+    `予約番号：${reservation.bookingNumber}`,
+    `フリガナ：${reservation.kana}`,
+    `終了予定：${reservation.endTime}`,
+    `メニュー料金：${formatPrice(
+      reservation.menuPrice
+    )}`,
+    `時間外料金：${formatPrice(
+      reservation.extraTimePrice
+    )}`,
+    `レンタルジム料金：${formatPrice(
+      reservation.rentalPrice
+    )}`,
+    `レンタルジム：${
       reservation.rentalGym
         ? "利用する"
         : "利用しない"
-    ],
-    [
-      "電話番号",
-      reservation.phone
-    ],
-    [
-      "メール",
-      reservation.email
-    ],
-    [
-      "ご要望",
+    }`,
+    `ご要望：${
       reservation.notes ||
-        "なし"
-    ]
+      "なし"
+    }`
   ];
 
-  rows.forEach(
-    ([label, value]) => {
-      const row =
-        document.createElement(
-          "div"
-        );
+  const databaseReservation = {
+    customer_name:
+      reservation.name,
 
-      const dt =
-        document.createElement(
-          "dt"
-        );
+    customer_phone:
+      reservation.phone,
 
-      const dd =
-        document.createElement(
-          "dd"
-        );
+    customer_email:
+      reservation.email,
 
-      dt.textContent = label;
-      dd.textContent = value;
+    menu:
+      reservation.menus.join("、"),
 
-      row.append(dt, dd);
-      details.appendChild(row);
-    }
-  );
+    reservation_date:
+      reservation.date,
 
-  const cancelButton =
-    document.createElement(
-      "button"
-    );
+    reservation_time:
+      reservation.startTime,
 
-  cancelButton.type =
-    "button";
+    duration:
+      reservation.duration,
 
-  cancelButton.className =
-    "cancel-button";
+    price:
+      reservation.totalPrice,
 
-  cancelButton.textContent =
-    "この予約をキャンセルする";
+    status:
+      "pending",
 
-  cancelButton.addEventListener(
-    "click",
-    () => {
-      const shouldCancel =
-        window.confirm(
-          `${formatDate(
-            reservation.date
-          )} ` +
-          `${reservation.startTime}の予約を` +
-          `キャンセルしますか？`
-        );
+    memo:
+      memoLines.join("\n")
+  };
 
-      if (!shouldCancel) {
-        return;
-      }
-
-      const updatedReservations =
-        loadReservations().filter(
-          (item) =>
-            item.id !==
-            reservation.id
-        );
-
-      const saved =
-        saveReservations(
-          updatedReservations
-        );
-
-      if (!saved) {
-        window.alert(
-          "予約のキャンセルに失敗しました。"
-        );
-
-        return;
-      }
-
-      renderReservations();
-    }
-  );
-
-  card.append(
-    idBadge,
-    title,
-    details,
-    cancelButton
-  );
-
-  return card;
-}
-
-function renderReservations() {
-  const reservations =
-    loadReservations().sort(
-      (a, b) => {
-        const aDate =
-          `${a.date}T${a.startTime}`;
-
-        const bDate =
-          `${b.date}T${b.startTime}`;
-
-        return aDate.localeCompare(
-          bDate
-        );
-      }
-    );
-
-  reservationListElement.innerHTML =
-    "";
-
-  if (
-    reservations.length === 0
-  ) {
-    emptyReservationMessage.classList.remove(
-      "hidden"
-    );
-
-    return;
-  }
-
-  emptyReservationMessage.classList.add(
-    "hidden"
-  );
-
-  reservations.forEach(
-    (reservation) => {
-      reservationListElement.appendChild(
-        createReservationCard(
-          reservation
-        )
+  const { error } =
+    await supabaseClient
+      .from("reservations")
+      .insert(
+        databaseReservation
       );
-    }
-  );
+
+  if (error) {
+    throw error;
+  }
 }
 
-/* ---------- 入力変更 ---------- */
+/* ========================================
+   入力変更
+======================================== */
 
 menuInputs.forEach((input) => {
   input.addEventListener(
@@ -1519,7 +1202,9 @@ rentalGymInput.addEventListener(
   }
 );
 
-/* ---------- 確認画面へ進む ---------- */
+/* ========================================
+   確認画面へ進む
+======================================== */
 
 bookingForm.addEventListener(
   "submit",
@@ -1542,7 +1227,9 @@ bookingForm.addEventListener(
   }
 );
 
-/* ---------- 入力内容を修正 ---------- */
+/* ========================================
+   入力内容を修正
+======================================== */
 
 editButton.addEventListener(
   "click",
@@ -1568,11 +1255,13 @@ editButton.addEventListener(
   }
 );
 
-/* ---------- 予約確定 ---------- */
+/* ========================================
+   予約確定
+======================================== */
 
 submitRequestButton.addEventListener(
   "click",
-  () => {
+  async () => {
     if (
       !pendingReservation ||
       isSubmitting
@@ -1594,62 +1283,41 @@ submitRequestButton.addEventListener(
       "予約を登録しています…";
 
     try {
-      if (
-        hasReservationConflict(
-          pendingReservation.date,
-          pendingReservation.startTime,
-          pendingReservation.duration
-        )
-      ) {
-        confirmationSection.classList.add(
-          "hidden"
-        );
-
-        bookingForm.classList.remove(
-          "hidden"
-        );
-
-        showError(
-          "確認中に同じ時間の予約が追加されました。別の時間を選択してください。",
-          timeInput
-        );
-
-        pendingReservation = null;
-
-        return;
-      }
-
-      const reservations =
-        loadReservations();
+      await saveReservationToSupabase(
+        pendingReservation
+      );
 
       const savedReservation = {
         ...pendingReservation
       };
-
-      reservations.push(
-        savedReservation
-      );
-
-      const saveSucceeded =
-        saveReservations(
-          reservations
-        );
-
-      if (!saveSucceeded) {
-        showConfirmationError(
-          "予約の保存に失敗しました。もう一度お試しください。"
-        );
-
-        return;
-      }
 
       displayCompleted(
         savedReservation
       );
 
       pendingReservation = null;
+    } catch (error) {
+      console.error(
+        "Supabase予約保存エラー:",
+        error
+      );
 
-      renderReservations();
+      let message =
+        "予約の保存に失敗しました。時間をおいて、もう一度お試しください。";
+
+      if (
+        error &&
+        error.message
+      ) {
+        console.error(
+          "詳細:",
+          error.message
+        );
+      }
+
+      showConfirmationError(
+        message
+      );
     } finally {
       isSubmitting = false;
 
@@ -1662,7 +1330,9 @@ submitRequestButton.addEventListener(
   }
 );
 
-/* ---------- 新しい予約 ---------- */
+/* ========================================
+   新しい予約
+======================================== */
 
 newBookingButton.addEventListener(
   "click",
@@ -1697,26 +1367,9 @@ newBookingButton.addEventListener(
   }
 );
 
-/* ---------- 保存済み予約 ---------- */
-
-showReservationsButton.addEventListener(
-  "click",
-  () => {
-    renderReservations();
-
-    reservationListSection.scrollIntoView({
-      behavior: "smooth",
-      block: "start"
-    });
-  }
-);
-
-refreshReservationsButton.addEventListener(
-  "click",
-  renderReservations
-);
-
-/* ---------- 最小予約日 ---------- */
+/* ========================================
+   最小予約日
+======================================== */
 
 function setMinimumDate() {
   const today =
@@ -1739,14 +1392,42 @@ function setMinimumDate() {
     `${year}-${month}-${day}`;
 }
 
-/* ---------- 初期表示 ---------- */
+/* ========================================
+   お客様画面から予約一覧を隠す
+======================================== */
+
+function hideCustomerReservationList() {
+  if (reservationListSection) {
+    reservationListSection.classList.add(
+      "hidden"
+    );
+  }
+
+  if (showReservationsButton) {
+    showReservationsButton.classList.add(
+      "hidden"
+    );
+  }
+
+  if (
+    refreshReservationsButton
+  ) {
+    refreshReservationsButton.classList.add(
+      "hidden"
+    );
+  }
+}
+
+/* ========================================
+   初期表示
+======================================== */
 
 function initializeBookingForm() {
   createTimeOptions();
-  migrateOldReservations();
   setMinimumDate();
   updateSummary();
-  renderReservations();
+  clearError();
+  hideCustomerReservationList();
 
   bookingForm.classList.remove(
     "hidden"
@@ -1761,4 +1442,4 @@ function initializeBookingForm() {
   );
 }
 
-initializeBookingForm();
+initializeBookingForm()
