@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <meta
+    name="robots"
+    content="noindex,nofollow"
+  >
+
+  <title>予約管理｜トレーナー専用</title>
+
+  <link
+    rel="stylesheet"
+    href="css/admin.css?v=0.8.0"
+  >
+</head>
+
+<body>
+
+  <header class="admin-header">
+    <div class="admin-header-inner">
+      <div>
+        <p class="version">
+          Ver.0.8.0
+        </p>
+
+        <h1>
+          予約管理
+        </h1>
+
+        <p class="admin-subtitle">
+          トレーナー専用ページ
+        </p>
+      </div>
+
+      <button
+        type="button"
+        id="logoutButton"
+        class="logout-button hidden"
+      >
+        ログアウト
+      </button>
+    </div>
+  </header>
+
+
+  <main class="admin-container">
+
+    <!-- =========================
+         ログイン画面
+    ========================== -->
+
+    <section
+      id="loginSection"
+      class="admin-card"
+    >
+      <h2>
+        管理者ログイン
+      </h2>
+
+      <p class="description">
+        登録済みの管理者アカウントで
+        ログインしてください。
+      </p>
+
+      <form id="loginForm">
+
+        <label for="loginEmail">
+          メールアドレス
+        </label>
+
+        <input
+          type="email"
+          id="loginEmail"
+          autocomplete="username"
+          placeholder="example@example.com"
+          required
+        >
+
+        <label for="loginPassword">
+          パスワード
+        </label>
+
+        <input
+          type="password"
+          id="loginPassword"
+          autocomplete="current-password"
+          required
+        >
+
+        <p
+          id="loginError"
+          class="error-message"
+          role="alert"
+        ></p>
+
+        <button
+          type="submit"
+          id="loginButton"
+          class="primary-button"
+        >
+          ログイン
+        </button>
+
+      </form>
+    </section>
+
+
+    <!-- =========================
+         管理画面
+    ========================== -->
+
+    <section
+      id="dashboardSection"
+      class="hidden"
+    >
+
+      <!-- 概要 -->
+
+      <section class="admin-card">
+
+        <div class="section-header">
+          <div>
+            <h2>
+              予約一覧
+            </h2>
+
+            <p
+              id="loggedInUser"
+              class="logged-in-user"
+            ></p>
+          </div>
+
+          <button
+            type="button"
+            id="refreshButton"
+            class="small-button"
+          >
+            更新
+          </button>
+        </div>
+
+
+        <!-- 集計 -->
+
+        <div class="summary-grid">
+
+          <div class="summary-card">
+            <span>
+              全予約
+            </span>
+
+            <strong id="totalReservations">
+              0
+            </strong>
+          </div>
+
+          <div class="summary-card">
+            <span>
+              申請中
+            </span>
+
+            <strong id="pendingReservations">
+              0
+            </strong>
+          </div>
+
+          <div class="summary-card">
+            <span>
+              確定
+            </span>
+
+            <strong id="confirmedReservations">
+              0
+            </strong>
+          </div>
+
+          <div class="summary-card">
+            <span>
+              完了
+            </span>
+
+            <strong id="completedReservations">
+              0
+            </strong>
+          </div>
+
+        </div>
+
+
+        <!-- 検索 -->
+
+        <div class="filter-area">
+
+          <label for="searchInput">
+            検索
+          </label>
+
+          <input
+            type="search"
+            id="searchInput"
+            placeholder="氏名・電話番号・メール・メニュー"
+          >
+
+
+          <label for="statusFilter">
+            予約状態
+          </label>
+
+          <select id="statusFilter">
+            <option value="">
+              すべて
+            </option>
+
+            <option value="pending">
+              申請中
+            </option>
+
+            <option value="confirmed">
+              確定
+            </option>
+
+            <option value="completed">
+              完了
+            </option>
+
+            <option value="cancelled">
+              キャンセル
+            </option>
+          </select>
+
+
+          <label for="dateFilter">
+            日付
+          </label>
+
+          <input
+            type="date"
+            id="dateFilter"
+          >
+
+
+          <button
+            type="button"
+            id="clearFilterButton"
+            class="secondary-button"
+          >
+            検索条件をクリア
+          </button>
+
+        </div>
+
+      </section>
+
+
+      <!-- エラー -->
+
+      <p
+        id="adminError"
+        class="error-message"
+        role="alert"
+      ></p>
+
+
+      <!-- 読み込み中 -->
+
+      <section
+        id="loadingSection"
+        class="admin-card hidden"
+      >
+        <p class="loading-message">
+          予約情報を読み込んでいます…
+        </p>
+      </section>
+
+
+      <!-- 予約なし -->
+
+      <section
+        id="emptySection"
+        class="admin-card hidden"
+      >
+        <p class="empty-message">
+          条件に一致する予約はありません。
+        </p>
+      </section>
+
+
+      <!-- 予約一覧 -->
+
+      <section
+        id="reservationList"
+        class="reservation-list"
+      ></section>
+
+    </section>
+
+  </main>
+
+
+  <!-- =========================
+       予約詳細モーダル
+  ========================== -->
+
+  <div
+    id="reservationModal"
+    class="modal hidden"
+    aria-hidden="true"
+  >
+
+    <div class="modal-backdrop"></div>
+
+    <section
+      class="modal-content"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modalTitle"
+    >
+
+      <div class="modal-header">
+
+        <h2 id="modalTitle">
+          予約詳細
+        </h2>
+
+        <button
+          type="button"
+          id="closeModalButton"
+          class="close-button"
+          aria-label="閉じる"
+        >
+          ×
+        </button>
+
+      </div>
+
+
+      <dl class="detail-list">
+
+        <div>
+          <dt>
+            予約ID
+          </dt>
+
+          <dd id="detailId">
+            -
+          </dd>
+        </div>
+
+        <div>
+          <dt>
+            お名前
+          </dt>
+
+          <dd id="detailName">
+            -
+          </dd>
+        </div>
+
+        <div>
+          <dt>
+            電話番号
+          </dt>
+
+          <dd id="detailPhone">
+            -
+          </dd>
+        </div>
+
+        <div>
+          <dt>
+            メールアドレス
+          </dt>
+
+          <dd id="detailEmail">
+            -
+          </dd>
+        </div>
+
+        <div>
+          <dt>
+            メニュー
+          </dt>
+
+          <dd id="detailMenu">
+            -
+          </dd>
+        </div>
+
+        <div>
+          <dt>
+            予約日
+          </dt>
+
+          <dd id="detailDate">
+            -
+          </dd>
+        </div>
+
+        <div>
+          <dt>
+            開始時間
+          </dt>
+
+          <dd id="detailTime">
+            -
+          </dd>
+        </div>
+
+        <div>
+          <dt>
+            時間
+          </dt>
+
+          <dd id="detailDuration">
+            -
+          </dd>
+        </div>
+
+        <div>
+          <dt>
+            金額
+          </dt>
+
+          <dd id="detailPrice">
+            -
+          </dd>
+        </div>
+
+        <div>
+          <dt>
+            登録日時
+          </dt>
+
+          <dd id="detailCreatedAt">
+            -
+          </dd>
+        </div>
+
+      </dl>
+
+
+      <label for="detailStatus">
+        予約状態
+      </label>
+
+      <select id="detailStatus">
+
+        <option value="pending">
+          申請中
+        </option>
+
+        <option value="confirmed">
+          確定
+        </option>
+
+        <option value="completed">
+          完了
+        </option>
+
+        <option value="cancelled">
+          キャンセル
+        </option>
+
+      </select>
+
+
+      <label for="detailMemo">
+        メモ
+      </label>
+
+      <textarea
+        id="detailMemo"
+        rows="8"
+      ></textarea>
+
+
+      <p
+        id="modalError"
+        class="error-message"
+        role="alert"
+      ></p>
+
+
+      <button
+        type="button"
+        id="saveReservationButton"
+        class="primary-button"
+      >
+        変更を保存
+      </button>
+
+      <button
+        type="button"
+        id="deleteReservationButton"
+        class="danger-button"
+      >
+        この予約を削除
+      </button>
+
+      <button
+        type="button"
+        id="cancelModalButton"
+        class="secondary-button"
+      >
+        閉じる
+      </button>
+
+    </section>
+
+  </div>
+
+
+  <!-- Supabase -->
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+  ></script>
+
+  <script
+    src="js/supabase-config.js?v=0.8.0"
+  ></script>
+
+  <script
+    src="js/admin.js?v=0.8.0"
+  ></script>
+
+</body>
+</html>
