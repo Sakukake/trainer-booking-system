@@ -1154,7 +1154,7 @@ async function saveReservationToSupabase(
     memo:
       memoLines.join("\n")
   };
-
+console.log("送信データ", databaseReservation);
   const { error } =
     await supabaseClient
       .from("reservations")
