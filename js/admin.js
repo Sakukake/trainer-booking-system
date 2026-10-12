@@ -1,831 +1,601 @@
+
 "use strict";
 
-/* ========================================
-   Ver.0.8.0
-   トレーナー専用 予約管理画面
-======================================== */
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, "0");
+const yen = n => Number(n || 0).toLocaleString("ja-JP") + "円";
 
-/* ---------- 要素 ---------- */
+const jst = date =>
+  new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(date);
 
-const loginSection =
-  document.getElementById("loginSection");
+const s = {
+  month: new Date(),
+  day: jst(new Date()),
+  reservations: [],
+  blocks: [],
+  menus: [],
+  settings: null
+};
 
-const dashboardSection =
-  document.getElementById("dashboardSection");
+s.month = new Date(`${s.day}T12:00:00+09:00`);
 
-const loginForm =
-  document.getElementById("loginForm");
-
-const loginEmail =
-  document.getElementById("loginEmail");
-
-const loginPassword =
-  document.getElementById("loginPassword");
-
-const loginButton =
-  document.getElementById("loginButton");
-
-const loginError =
-  document.getElementById("loginError");
-
-const logoutButton =
-  document.getElementById("logoutButton");
-
-const loggedInUser =
-  document.getElementById("loggedInUser");
-
-const refreshButton =
-  document.getElementById("refreshButton");
-
-const searchInput =
-  document.getElementById("searchInput");
-
-const statusFilter =
-  document.getElementById("statusFilter");
-
-const dateFilter =
-  document.getElementById("dateFilter");
-
-const clearFilterButton =
-  document.getElementById("clearFilterButton");
-
-const reservationList =
-  document.getElementById("reservationList");
-
-const loadingSection =
-  document.getElementById("loadingSection");
-
-const emptySection =
-  document.getElementById("emptySection");
-
-const adminError =
-  document.getElementById("adminError");
-
-const totalReservations =
-  document.getElementById("totalReservations");
-
-const pendingReservations =
-  document.getElementById("pendingReservations");
-
-const confirmedReservations =
-  document.getElementById("confirmedReservations");
-
-const completedReservations =
-  document.getElementById("completedReservations");
-
-/* ---------- モーダル ---------- */
-
-const reservationModal =
-  document.getElementById("reservationModal");
-
-const closeModalButton =
-  document.getElementById("closeModalButton");
-
-const cancelModalButton =
-  document.getElementById("cancelModalButton");
-
-const saveReservationButton =
-  document.getElementById("saveReservationButton");
-
-const deleteReservationButton =
-  document.getElementById("deleteReservationButton");
-
-const detailId =
-  document.getElementById("detailId");
-
-const detailName =
-  document.getElementById("detailName");
-
-const detailPhone =
-  document.getElementById("detailPhone");
-
-const detailEmail =
-  document.getElementById("detailEmail");
-
-const detailMenu =
-  document.getElementById("detailMenu");
-
-const detailDate =
-  document.getElementById("detailDate");
-
-const detailTime =
-  document.getElementById("detailTime");
-
-const detailDuration =
-  document.getElementById("detailDuration");
-
-const detailPrice =
-  document.getElementById("detailPrice");
-
-const detailCreatedAt =
-  document.getElementById("detailCreatedAt");
-
-const detailStatus =
-  document.getElementById("detailStatus");
-
-const detailMemo =
-  document.getElementById("detailMemo");
-
-const modalError =
-  document.getElementById("modalError");
-
-
-/* ---------- 状態 ---------- */
-
-let reservations = [];
-let selectedReservation = null;
-
-
-/* ---------- 共通 ---------- */
-
-function formatPrice(value) {
-  const number = Number(value) || 0;
-
-  return `${number.toLocaleString("ja-JP")}円`;
+function error(msg) {
+  $("adminError").textContent = msg || "";
 }
 
-function formatDateTime(value) {
-  if (!value) {
-    return "-";
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat(
-    "ja-JP",
-    {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit"
-    }
-  ).format(date);
+function dateInMonth() {
+  return `${s.month.getFullYear()}-${pad(s.month.getMonth() + 1)}`;
 }
 
-function getStatusLabel(status) {
-  switch (status) {
-    case "pending":
-      return "申請中";
+function statusName(x) {
+  return {
+    pending: "申請中",
+    confirmed: "確定",
+    completed: "完了",
+    cancelled: "キャンセル"
+  }[x] || x;
+}
 
-    case "confirmed":
-      return "確定";
+function escapeText(text) {
+  const span = document.createElement("span");
+  span.textContent = text ?? "";
+  return span;
+}
 
-    case "completed":
-      return "完了";
+async function adminLoad() {
+  const [rs, bs, ms, gs] = await Promise.all([
+    supabaseClient
+      .from("reservations")
+      .select("*")
+      .order("reservation_date"),
 
-    case "cancelled":
-      return "キャンセル";
+    supabaseClient
+      .from("gym_blocks")
+      .select("*")
+      .order("start_at"),
 
-    default:
-      return status || "-";
+    supabaseClient
+      .from("gym_menus")
+      .select("*")
+      .order("sort_order"),
+
+    supabaseClient
+      .from("gym_settings")
+      .select("*")
+      .eq("id", 1)
+      .single()
+  ]);
+
+  for (const r of [rs, bs, ms, gs]) {
+    if (r.error) throw r.error;
+  }
+
+  s.reservations = rs.data || [];
+  s.blocks = bs.data || [];
+  s.menus = ms.data || [];
+  s.settings = gs.data;
+
+  $("facilityFee").value = s.settings.facility_fee;
+  $("openTime").value = s.settings.opening_time.slice(0, 5);
+  $("lastTime").value = s.settings.last_start_time.slice(0, 5);
+
+  renderMenus();
+  renderCalendar();
+  renderDay();
+}
+
+function utcJstTime(date) {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Tokyo",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23"
+  }).format(new Date(date));
+}
+
+function dayRanges(d) {
+  const a = new Date(`${d}T00:00:00+09:00`).getTime();
+  return [a, a + 86400000];
+}
+
+function blocksForDay(d) {
+  const [a, b] = dayRanges(d);
+
+  return s.blocks.filter(x =>
+    new Date(x.start_at).getTime() < b &&
+    new Date(x.end_at).getTime() > a
+  );
+}
+
+function renderCalendar() {
+  const month = dateInMonth();
+  const [y, m] = month.split("-").map(Number);
+
+  $("monthLabel").textContent = `${y}年${m}月`;
+
+  const cal = $("calendar");
+  cal.replaceChildren();
+
+  for (const d of ["日", "月", "火", "水", "木", "金", "土"]) {
+    const el = document.createElement("div");
+    el.className = "cal-head";
+    el.textContent = d;
+    cal.append(el);
+  }
+
+  const first = new Date(y, m - 1, 1);
+  const max = new Date(y, m, 0).getDate();
+
+  for (let i = 0; i < first.getDay(); i++) {
+    cal.append(document.createElement("div"));
+  }
+
+  for (let day = 1; day <= max; day++) {
+    const d = `${y}-${pad(m)}-${pad(day)}`;
+
+    const count = s.reservations.filter(x =>
+      x.reservation_date === d &&
+      x.status !== "cancelled"
+    ).length;
+
+    const b = document.createElement("button");
+
+    b.className =
+      "cal-day" +
+      (s.day === d ? " active" : "") +
+      (blocksForDay(d).length ? " off" : "");
+
+    b.textContent = day;
+
+    const sub = document.createElement("span");
+    sub.className = "count";
+    sub.textContent =
+      (count ? `${count}件` : "") +
+      (blocksForDay(d).length ? " ▪" : "");
+
+    b.append(sub);
+
+    b.onclick = () => {
+      s.day = d;
+      renderCalendar();
+      renderDay();
+    };
+
+    cal.append(b);
   }
 }
 
-function clearErrors() {
-  loginError.textContent = "";
-  adminError.textContent = "";
-  modalError.textContent = "";
-}
+function renderDay() {
+  $("dayTitle").textContent = `${s.day} の予約・休業`;
 
+  const list = $("dayReservations");
+  list.replaceChildren();
 
-/* ---------- ログイン表示 ---------- */
+  const items = s.reservations
+    .filter(x => x.reservation_date === s.day)
+    .sort((a, b) =>
+      a.reservation_time.localeCompare(b.reservation_time)
+    );
 
-function showLogin() {
-  loginSection.classList.remove("hidden");
-  dashboardSection.classList.add("hidden");
-  logoutButton.classList.add("hidden");
+  if (!items.length) {
+    list.append(escapeText("予約なし"));
+  }
 
-  reservationList.innerHTML = "";
-}
+  for (const r of items) {
+    const el = document.createElement("div");
+    el.className = "day-entry";
 
-function showDashboard(user) {
-  loginSection.classList.add("hidden");
-  dashboardSection.classList.remove("hidden");
-  logoutButton.classList.remove("hidden");
+    el.append(
+      escapeText(
+        `${r.reservation_time} / ${r.duration}分 / ` +
+        `${r.customer_name} / ${r.menu} / ` +
+        `${yen(r.price)} / ${statusName(r.status)}`
+      )
+    );
 
-  loggedInUser.textContent =
-    user?.email
-      ? `ログイン中：${user.email}`
-      : "";
-}
+    const btn = document.createElement("button");
+    btn.className = "mini";
+    btn.textContent = "状態・メモ編集";
 
-
-/* ---------- ログイン ---------- */
-
-loginForm.addEventListener(
-  "submit",
-  async (event) => {
-    event.preventDefault();
-
-    clearErrors();
-
-    const email =
-      loginEmail.value.trim();
-
-    const password =
-      loginPassword.value;
-
-    if (!email || !password) {
-      loginError.textContent =
-        "メールアドレスとパスワードを入力してください。";
-
-      return;
-    }
-
-    loginButton.disabled = true;
-    loginButton.textContent =
-      "ログイン中…";
-
-    try {
-      const {
-        data,
-        error
-      } =
-        await supabaseClient.auth
-          .signInWithPassword({
-            email,
-            password
-          });
-
-      if (error) {
-        throw error;
-      }
-
-      showDashboard(data.user);
-
-      await loadReservations();
-    } catch (error) {
-      console.error(
-        "ログインエラー:",
-        error
+    btn.onclick = async () => {
+      const status = prompt(
+        "状態：pending / confirmed / completed / cancelled",
+        r.status
       );
 
-      loginError.textContent =
-        "ログインできませんでした。メールアドレスまたはパスワードを確認してください。";
-    } finally {
-      loginButton.disabled = false;
-      loginButton.textContent =
-        "ログイン";
-    }
-  }
-);
+      if (status === null) return;
 
+      if (![
+        "pending",
+        "confirmed",
+        "completed",
+        "cancelled"
+      ].includes(status)) {
+        return alert("状態が正しくありません");
+      }
 
-/* ---------- ログアウト ---------- */
+      const memo = prompt("メモ", r.memo || "");
+      if (memo === null) return;
 
-logoutButton.addEventListener(
-  "click",
-  async () => {
-    await supabaseClient.auth.signOut();
-
-    reservations = [];
-    selectedReservation = null;
-
-    showLogin();
-  }
-);
-
-
-/* ---------- 予約取得 ---------- */
-
-async function loadReservations() {
-  clearErrors();
-
-  loadingSection.classList.remove(
-    "hidden"
-  );
-
-  emptySection.classList.add(
-    "hidden"
-  );
-
-  reservationList.innerHTML = "";
-
-  try {
-    const {
-      data,
-      error
-    } =
-      await supabaseClient
+      const { error: e } = await supabaseClient
         .from("reservations")
-        .select("*")
-        .order(
-          "reservation_date",
-          {
-            ascending: true
-          }
-        )
-        .order(
-          "reservation_time",
-          {
-            ascending: true
-          }
-        );
+        .update({ status, memo })
+        .eq("id", r.id);
 
-    if (error) {
-      throw error;
-    }
+      if (e) return alert(e.message);
 
-    reservations =
-      Array.isArray(data)
-        ? data
-        : [];
+      await safeLoad();
+    };
 
-    updateSummary();
-
-    renderReservations();
-  } catch (error) {
-    console.error(
-      "予約取得エラー:",
-      error
-    );
-
-    adminError.textContent =
-      "予約情報を取得できませんでした。管理者権限の設定を確認してください。";
-  } finally {
-    loadingSection.classList.add(
-      "hidden"
-    );
+    el.append(btn);
+    list.append(el);
   }
-}
 
+  const blocks = $("dayBlocks");
+  blocks.replaceChildren();
 
-/* ---------- 集計 ---------- */
+  for (const block of blocksForDay(s.day)) {
+    const row = document.createElement("div");
+    row.className = "day-entry";
 
-function updateSummary() {
-  totalReservations.textContent =
-    reservations.length;
-
-  pendingReservations.textContent =
-    reservations.filter(
-      (item) =>
-        item.status === "pending"
-    ).length;
-
-  confirmedReservations.textContent =
-    reservations.filter(
-      (item) =>
-        item.status === "confirmed"
-    ).length;
-
-  completedReservations.textContent =
-    reservations.filter(
-      (item) =>
-        item.status === "completed"
-    ).length;
-}
-
-
-/* ---------- 絞り込み ---------- */
-
-function getFilteredReservations() {
-  const keyword =
-    searchInput.value
-      .trim()
-      .toLowerCase();
-
-  const status =
-    statusFilter.value;
-
-  const date =
-    dateFilter.value;
-
-  return reservations.filter(
-    (reservation) => {
-      if (
-        status &&
-        reservation.status !== status
-      ) {
-        return false;
-      }
-
-      if (
-        date &&
-        reservation.reservation_date !==
-          date
-      ) {
-        return false;
-      }
-
-      if (!keyword) {
-        return true;
-      }
-
-      const searchTarget = [
-        reservation.customer_name,
-        reservation.customer_phone,
-        reservation.customer_email,
-        reservation.menu,
-        reservation.memo
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-      return searchTarget.includes(
-        keyword
-      );
-    }
-  );
-}
-
-
-/* ---------- 一覧描画 ---------- */
-
-function renderReservations() {
-  const filtered =
-    getFilteredReservations();
-
-  reservationList.innerHTML = "";
-
-  if (filtered.length === 0) {
-    emptySection.classList.remove(
-      "hidden"
+    row.append(
+      escapeText(
+        `${utcJstTime(block.start_at)}〜` +
+        `${utcJstTime(block.end_at)}　${block.reason} `
+      )
     );
 
+    const remove = document.createElement("button");
+    remove.className = "mini danger";
+    remove.textContent = "解除";
+
+    remove.onclick = async () => {
+      if (!confirm("この予約不可設定を解除しますか？")) {
+        return;
+      }
+
+      const { error: e } = await supabaseClient
+        .from("gym_blocks")
+        .delete()
+        .eq("id", block.id);
+
+      if (e) return alert(e.message);
+
+      await safeLoad();
+    };
+
+    row.append(remove);
+    blocks.append(row);
+  }
+
+  $("manualMenu").replaceChildren(
+    ...s.menus
+      .filter(m => m.enabled)
+      .map(m => {
+        const o = document.createElement("option");
+        o.value = m.id;
+        o.textContent =
+          `${m.name} / ${yen(m.price + s.settings.facility_fee)}`;
+        return o;
+      })
+  );
+
+  refreshManualTimes();
+}
+
+async function refreshManualTimes() {
+  const select = $("manualTime");
+
+  const menu = s.menus.find(
+    m => String(m.id) === $("manualMenu").value
+  );
+
+  select.replaceChildren();
+
+  if (!menu) return;
+
+  const { data, error: e } = await supabaseClient.rpc(
+    "beus_busy",
+    { p_date: s.day }
+  );
+
+  if (e) {
+    error(e.message);
     return;
   }
 
-  emptySection.classList.add(
-    "hidden"
-  );
+  const min = t => {
+    const [h, m] = t.split(":").map(Number);
+    return h * 60 + m;
+  };
 
-  filtered.forEach(
-    (reservation) => {
-      const card =
-        document.createElement(
-          "article"
-        );
+  const fmt = t =>
+    `${pad(Math.floor(t / 60))}:${pad(t % 60)}`;
 
-      card.className =
-        "reservation-card";
+  const occupied = data || [];
 
-      const title =
-        document.createElement("h3");
+  for (
+    let t = min(s.settings.opening_time.slice(0, 5));
+    t <= min(s.settings.last_start_time.slice(0, 5));
+    t += 15
+  ) {
+    const val = fmt(t);
 
-      title.textContent =
-        `${reservation.reservation_date} ` +
-        `${reservation.reservation_time}`;
+    const a = new Date(
+      `${s.day}T${val}:00+09:00`
+    ).getTime();
 
-      const name =
-        document.createElement("p");
+    const b = a + menu.duration * 60000;
 
-      name.textContent =
-        reservation.customer_name ||
-        "-";
-
-      const menu =
-        document.createElement("p");
-
-      menu.textContent =
-        reservation.menu ||
-        "-";
-
-      const status =
-        document.createElement("span");
-
-      status.className =
-        `status-badge status-${reservation.status}`;
-
-      status.textContent =
-        getStatusLabel(
-          reservation.status
-        );
-
-      const price =
-        document.createElement("strong");
-
-      price.textContent =
-        formatPrice(
-          reservation.price
-        );
-
-      const detailButton =
-        document.createElement(
-          "button"
-        );
-
-      detailButton.type =
-        "button";
-
-      detailButton.className =
-        "primary-button";
-
-      detailButton.textContent =
-        "詳細を見る";
-
-      detailButton.addEventListener(
-        "click",
-        () => {
-          openReservationModal(
-            reservation
-          );
-        }
+    const blocked =
+      a <= Date.now() ||
+      occupied.some(x =>
+        a < new Date(x.end_at).getTime() &&
+        b > new Date(x.start_at).getTime()
       );
 
-      card.append(
-        status,
-        title,
-        name,
-        menu,
-        price,
-        detailButton
-      );
+    const o = document.createElement("option");
+    o.value = val;
+    o.textContent = val + (blocked ? "（不可）" : "");
+    o.disabled = blocked;
 
-      reservationList.appendChild(
-        card
-      );
-    }
-  );
+    select.append(o);
+  }
+
+  select.value =
+    [...select.options].find(o => !o.disabled)?.value || "";
 }
 
+function renderMenus() {
+  const box = $("menuSettings");
+  box.replaceChildren();
 
-/* ---------- 詳細 ---------- */
+  for (const m of s.menus) {
+    const row = document.createElement("div");
+    row.className = "menu-setting";
 
-function openReservationModal(
-  reservation
-) {
-  selectedReservation =
-    reservation;
+    const name = document.createElement("label");
+    name.textContent = m.name;
 
-  modalError.textContent = "";
+    const input = document.createElement("input");
+    input.type = "number";
+    input.min = 0;
+    input.value = m.price;
+    input.dataset.menuId = m.id;
 
-  detailId.textContent =
-    reservation.id ?? "-";
-
-  detailName.textContent =
-    reservation.customer_name ||
-    "-";
-
-  detailPhone.textContent =
-    reservation.customer_phone ||
-    "-";
-
-  detailEmail.textContent =
-    reservation.customer_email ||
-    "-";
-
-  detailMenu.textContent =
-    reservation.menu ||
-    "-";
-
-  detailDate.textContent =
-    reservation.reservation_date ||
-    "-";
-
-  detailTime.textContent =
-    reservation.reservation_time ||
-    "-";
-
-  detailDuration.textContent =
-    reservation.duration != null
-      ? `${reservation.duration}分`
-      : "-";
-
-  detailPrice.textContent =
-    formatPrice(
-      reservation.price
-    );
-
-  detailCreatedAt.textContent =
-    formatDateTime(
-      reservation.created_at
-    );
-
-  detailStatus.value =
-    reservation.status ||
-    "pending";
-
-  detailMemo.value =
-    reservation.memo ||
-    "";
-
-  reservationModal.classList.remove(
-    "hidden"
-  );
-
-  reservationModal.setAttribute(
-    "aria-hidden",
-    "false"
-  );
+    name.append(document.createTextNode("（円）"));
+    row.append(name, input);
+    box.append(row);
+  }
 }
 
-function closeReservationModal() {
-  selectedReservation = null;
-
-  reservationModal.classList.add(
-    "hidden"
-  );
-
-  reservationModal.setAttribute(
-    "aria-hidden",
-    "true"
-  );
+async function safeLoad() {
+  try {
+    error("");
+    await adminLoad();
+  } catch (e) {
+    console.error(e);
+    error("取得または更新に失敗しました：" + e.message);
+  }
 }
 
+$("loginForm").onsubmit = async ev => {
+  ev.preventDefault();
 
-/* ---------- 変更保存 ---------- */
+  $("loginError").textContent = "";
 
-saveReservationButton.addEventListener(
-  "click",
-  async () => {
-    if (!selectedReservation) {
-      return;
-    }
+  const { data, error: e } =
+    await supabaseClient.auth.signInWithPassword({
+      email: $("loginEmail").value.trim(),
+      password: $("loginPassword").value
+    });
 
-    clearErrors();
+  $("loginPassword").value = "";
 
-    saveReservationButton.disabled =
-      true;
-
-    saveReservationButton.textContent =
-      "保存中…";
-
-    try {
-      const {
-        error
-      } =
-        await supabaseClient
-          .from("reservations")
-          .update({
-            status:
-              detailStatus.value,
-
-            memo:
-              detailMemo.value.trim()
-          })
-          .eq(
-            "id",
-            selectedReservation.id
-          );
-
-      if (error) {
-        throw error;
-      }
-
-      closeReservationModal();
-
-      await loadReservations();
-    } catch (error) {
-      console.error(
-        "予約更新エラー:",
-        error
-      );
-
-      modalError.textContent =
-        "変更を保存できませんでした。";
-    } finally {
-      saveReservationButton.disabled =
-        false;
-
-      saveReservationButton.textContent =
-        "変更を保存";
-    }
-  }
-);
-
-
-/* ---------- 削除 ---------- */
-
-deleteReservationButton.addEventListener(
-  "click",
-  async () => {
-    if (!selectedReservation) {
-      return;
-    }
-
-    const confirmed =
-      window.confirm(
-        "この予約を完全に削除しますか？"
-      );
-
-    if (!confirmed) {
-      return;
-    }
-
-    clearErrors();
-
-    try {
-      const {
-        error
-      } =
-        await supabaseClient
-          .from("reservations")
-          .delete()
-          .eq(
-            "id",
-            selectedReservation.id
-          );
-
-      if (error) {
-        throw error;
-      }
-
-      closeReservationModal();
-
-      await loadReservations();
-    } catch (error) {
-      console.error(
-        "予約削除エラー:",
-        error
-      );
-
-      modalError.textContent =
-        "予約を削除できませんでした。";
-    }
-  }
-);
-
-
-/* ---------- 検索 ---------- */
-
-searchInput.addEventListener(
-  "input",
-  renderReservations
-);
-
-statusFilter.addEventListener(
-  "change",
-  renderReservations
-);
-
-dateFilter.addEventListener(
-  "change",
-  renderReservations
-);
-
-clearFilterButton.addEventListener(
-  "click",
-  () => {
-    searchInput.value = "";
-    statusFilter.value = "";
-    dateFilter.value = "";
-
-    renderReservations();
-  }
-);
-
-refreshButton.addEventListener(
-  "click",
-  loadReservations
-);
-
-
-/* ---------- モーダル閉じる ---------- */
-
-closeModalButton.addEventListener(
-  "click",
-  closeReservationModal
-);
-
-cancelModalButton.addEventListener(
-  "click",
-  closeReservationModal
-);
-
-
-/* ---------- 初期ログイン状態 ---------- */
-
-async function initializeAdmin() {
-  clearErrors();
-
-  const {
-    data,
-    error
-  } =
-    await supabaseClient.auth
-      .getSession();
-
-  if (error) {
-    console.error(
-      "セッション確認エラー:",
-      error
-    );
-
-    showLogin();
-
+  if (e) {
+    $("loginError").textContent = "ログインできませんでした";
     return;
   }
 
-  const session =
-    data.session;
+  await showDashboard(data.user);
+};
 
-  if (!session) {
-    showLogin();
-
+async function showDashboard(user) {
+  if (
+    user.email?.toLowerCase() !==
+    "sakukake.0825@gmail.com"
+  ) {
+    await supabaseClient.auth.signOut();
+    $("loginError").textContent = "管理者権限がありません";
     return;
   }
 
-  showDashboard(
-    session.user
-  );
+  $("loginSection").classList.add("hidden");
+  $("dashboard").classList.remove("hidden");
+  $("logoutButton").classList.remove("hidden");
 
-  await loadReservations();
+  $("adminUser").textContent =
+    `ログイン中：${user.email}`;
+
+  await safeLoad();
 }
 
-initializeAdmin();
+$("logoutButton").onclick = async () => {
+  await supabaseClient.auth.signOut();
+
+  $("dashboard").classList.add("hidden");
+  $("loginSection").classList.remove("hidden");
+  $("logoutButton").classList.add("hidden");
+};
+
+$("prevMonth").onclick = () => {
+  s.month = new Date(
+    s.month.getFullYear(),
+    s.month.getMonth() - 1,
+    1
+  );
+  renderCalendar();
+};
+
+$("nextMonth").onclick = () => {
+  s.month = new Date(
+    s.month.getFullYear(),
+    s.month.getMonth() + 1,
+    1
+  );
+  renderCalendar();
+};
+
+async function addBlock(allDay) {
+  try {
+    let a, b;
+
+    if (allDay) {
+      a = new Date(`${s.day}T00:00:00+09:00`);
+      b = new Date(a.getTime() + 86400000);
+    } else {
+      const first = $("blockStart").value;
+      const last = $("blockEnd").value;
+
+      if (!first || !last) {
+        throw Error("開始と終了を入力してください");
+      }
+
+      a = new Date(`${s.day}T${first}:00+09:00`);
+      b = new Date(`${s.day}T${last}:00+09:00`);
+
+      if (b <= a) {
+        b = new Date(b.getTime() + 86400000);
+      }
+    }
+
+    if (b <= a) {
+      throw Error("終了日時が不正です");
+    }
+
+    const { error: e } = await supabaseClient
+      .from("gym_blocks")
+      .insert({
+        start_at: a.toISOString(),
+        end_at: b.toISOString(),
+        reason: allDay
+          ? "休業日"
+          : $("blockReason").value.trim() || "予約不可"
+      });
+
+    if (e) throw e;
+
+    await safeLoad();
+  } catch (e) {
+    alert("登録失敗：" + e.message);
+  }
+}
+
+$("addBlock").onclick = () => addBlock(false);
+$("allDayBlock").onclick = () => addBlock(true);
+
+$("manualMenu").onchange = refreshManualTimes;
+
+$("manualForm").onsubmit = async ev => {
+  ev.preventDefault();
+
+  const params = {
+    p_menu_id: $("manualMenu").value,
+    p_date: s.day,
+    p_time: $("manualTime").value,
+    p_name: $("manualName").value.trim(),
+    p_kana: $("manualKana").value.trim(),
+    p_phone: $("manualPhone").value.replace(/[-\sー]/g, ""),
+    p_email: $("manualEmail").value.trim(),
+    p_notes: $("manualNotes").value,
+    p_source: "admin"
+  };
+
+  const { data, error: e } =
+    await supabaseClient.rpc(
+      "beus_create_booking",
+      params
+    );
+
+  if (e) {
+    return alert("予約登録できません：" + e.message);
+  }
+
+  alert("登録成功：予約ID " + data);
+  $("manualForm").reset();
+
+  await safeLoad();
+};
+
+$("settingsForm").onsubmit = async ev => {
+  ev.preventDefault();
+
+  const opening_time = $("openTime").value;
+  const last_start_time = $("lastTime").value;
+
+  if (opening_time > last_start_time) {
+    return alert(
+      "開始時刻と最終開始時刻を確認してください"
+    );
+  }
+
+  const { error: e } = await supabaseClient
+    .from("gym_settings")
+    .update({
+      facility_fee: Number($("facilityFee").value),
+      opening_time,
+      last_start_time,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", 1);
+
+  if (e) {
+    return alert("変更できません：" + e.message);
+  }
+
+  alert("店舗設定を保存しました");
+
+  await safeLoad();
+};
+
+$("saveMenus").onclick = async () => {
+  for (
+    const el of
+    document.querySelectorAll("[data-menu-id]")
+  ) {
+    const { error: e } = await supabaseClient
+      .from("gym_menus")
+      .update({
+        price: Number(el.value)
+      })
+      .eq("id", el.dataset.menuId);
+
+    if (e) {
+      return alert(
+        "料金変更に失敗：" + e.message
+      );
+    }
+  }
+
+  alert("メニュー料金を保存しました");
+  await safeLoad();
+};
+
+(async () => {
+  if (typeof supabaseClient === "undefined") {
+    error("supabase-config.js を確認してください");
+    return;
+  }
+
+  const { data, error: e } =
+    await supabaseClient.auth.getSession();
+
+  if (!e && data.session) {
+    await showDashboard(data.session.user);
+  }
+})();

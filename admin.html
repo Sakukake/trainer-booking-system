@@ -1,5 +1,7 @@
+
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
   <meta charset="UTF-8">
 
@@ -13,60 +15,56 @@
     content="noindex,nofollow"
   >
 
-  <title>予約管理｜トレーナー専用</title>
+  <title>Be Us｜予約管理</title>
 
   <link
     rel="stylesheet"
-    href="css/admin.css?v=0.8.0"
+    href="css/admin.css?v=0.9.0"
   >
 </head>
 
 <body>
 
+  <!-- ヘッダー -->
+
   <header class="admin-header">
     <div class="admin-header-inner">
-      <div>
-        <p class="version">
-          Ver.0.8.0
-        </p>
 
-        <h1>
-          予約管理
-        </h1>
+      <div>
+        <p class="version">Ver.0.9.0</p>
+
+        <h1>Be Us</h1>
 
         <p class="admin-subtitle">
-          トレーナー専用ページ
+          みんなで作るジム｜管理画面
         </p>
       </div>
 
       <button
         type="button"
         id="logoutButton"
-        class="logout-button hidden"
+        class="secondary-button hidden"
       >
         ログアウト
       </button>
+
     </div>
   </header>
 
 
   <main class="admin-container">
 
-    <!-- =========================
-         ログイン画面
-    ========================== -->
+    <!-- ログイン -->
 
     <section
       id="loginSection"
       class="admin-card"
     >
-      <h2>
-        管理者ログイン
-      </h2>
+
+      <h2>管理者ログイン</h2>
 
       <p class="description">
-        登録済みの管理者アカウントで
-        ログインしてください。
+        管理者アカウントでログインしてください。
       </p>
 
       <form id="loginForm">
@@ -76,10 +74,9 @@
         </label>
 
         <input
-          type="email"
           id="loginEmail"
+          type="email"
           autocomplete="username"
-          placeholder="example@example.com"
           required
         >
 
@@ -88,8 +85,8 @@
         </label>
 
         <input
-          type="password"
           id="loginPassword"
+          type="password"
           autocomplete="current-password"
           required
         >
@@ -102,7 +99,6 @@
 
         <button
           type="submit"
-          id="loginButton"
           class="primary-button"
         >
           ログイン
@@ -112,409 +108,347 @@
     </section>
 
 
-    <!-- =========================
-         管理画面
-    ========================== -->
+    <!-- ダッシュボード -->
 
     <section
-      id="dashboardSection"
+      id="dashboard"
       class="hidden"
     >
 
-      <!-- 概要 -->
+      <section class="admin-card">
+
+        <h2>Be Us 管理ダッシュボード</h2>
+
+        <p
+          id="adminUser"
+          class="description"
+        ></p>
+
+        <p class="description">
+          カレンダーから日付を選んで
+          予約・休日・営業時間を管理できます。
+        </p>
+
+        <p
+          id="adminError"
+          class="error-message"
+          role="alert"
+        ></p>
+
+      </section>
+
+
+      <!-- カレンダー -->
 
       <section class="admin-card">
 
         <div class="section-header">
-          <div>
-            <h2>
-              予約一覧
-            </h2>
 
-            <p
-              id="loggedInUser"
-              class="logged-in-user"
-            ></p>
-          </div>
+          <h2>予約カレンダー</h2>
 
-          <button
-            type="button"
-            id="refreshButton"
-            class="small-button"
-          >
-            更新
-          </button>
-        </div>
+          <div class="month-controls">
 
+            <button
+              type="button"
+              id="prevMonth"
+              class="small-button"
+            >
+              前月
+            </button>
 
-        <!-- 集計 -->
-
-        <div class="summary-grid">
-
-          <div class="summary-card">
-            <span>
-              全予約
-            </span>
-
-            <strong id="totalReservations">
-              0
+            <strong id="monthLabel">
+              -
             </strong>
-          </div>
 
-          <div class="summary-card">
-            <span>
-              申請中
-            </span>
+            <button
+              type="button"
+              id="nextMonth"
+              class="small-button"
+            >
+              翌月
+            </button>
 
-            <strong id="pendingReservations">
-              0
-            </strong>
-          </div>
-
-          <div class="summary-card">
-            <span>
-              確定
-            </span>
-
-            <strong id="confirmedReservations">
-              0
-            </strong>
-          </div>
-
-          <div class="summary-card">
-            <span>
-              完了
-            </span>
-
-            <strong id="completedReservations">
-              0
-            </strong>
           </div>
 
         </div>
 
+        <p class="description">
+          日付を押すと、その日の予約と
+          予約不可時間を表示します。
+        </p>
 
-        <!-- 検索 -->
+        <div
+          id="calendar"
+          class="calendar-grid"
+        ></div>
 
-        <div class="filter-area">
+      </section>
 
-          <label for="searchInput">
-            検索
+
+      <!-- 選択した日 -->
+
+      <section class="admin-card">
+
+        <h2 id="dayTitle">
+          選択した日の予約
+        </h2>
+
+        <h3>予約一覧</h3>
+
+        <div
+          id="dayReservations"
+          class="day-list"
+        ></div>
+
+        <h3>休日・予約不可時間</h3>
+
+        <div
+          id="dayBlocks"
+          class="day-list"
+        ></div>
+
+      </section>
+
+
+      <!-- 休日設定 -->
+
+      <section class="admin-card">
+
+        <h2>休日・予約不可時間の登録</h2>
+
+        <p class="description">
+          カレンダーで日付を選択してから
+          登録してください。
+        </p>
+
+        <button
+          type="button"
+          id="allDayBlock"
+          class="danger-button"
+        >
+          この日を終日休業にする
+        </button>
+
+        <label for="blockStart">
+          予約不可 開始時間
+        </label>
+
+        <input
+          type="time"
+          id="blockStart"
+          step="900"
+        >
+
+        <label for="blockEnd">
+          予約不可 終了時間
+        </label>
+
+        <input
+          type="time"
+          id="blockEnd"
+          step="900"
+        >
+
+        <label for="blockReason">
+          理由
+        </label>
+
+        <input
+          type="text"
+          id="blockReason"
+          placeholder="例：私用・設備点検"
+        >
+
+        <button
+          type="button"
+          id="addBlock"
+          class="primary-button"
+        >
+          予約不可時間を登録する
+        </button>
+
+      </section>
+
+
+      <!-- 手動予約 -->
+
+      <section class="admin-card">
+
+        <h2>管理者による予約登録</h2>
+
+        <p class="description">
+          電話・Instagram・口頭で受けた
+          予約を登録できます。
+        </p>
+
+        <form id="manualForm">
+
+          <label for="manualMenu">
+            メニュー
+          </label>
+
+          <select
+            id="manualMenu"
+            required
+          ></select>
+
+          <label for="manualTime">
+            開始時間
+          </label>
+
+          <select
+            id="manualTime"
+            required
+          ></select>
+
+          <label for="manualName">
+            お客様名
           </label>
 
           <input
-            type="search"
-            id="searchInput"
-            placeholder="氏名・電話番号・メール・メニュー"
+            type="text"
+            id="manualName"
+            required
           >
 
-
-          <label for="statusFilter">
-            予約状態
-          </label>
-
-          <select id="statusFilter">
-            <option value="">
-              すべて
-            </option>
-
-            <option value="pending">
-              申請中
-            </option>
-
-            <option value="confirmed">
-              確定
-            </option>
-
-            <option value="completed">
-              完了
-            </option>
-
-            <option value="cancelled">
-              キャンセル
-            </option>
-          </select>
-
-
-          <label for="dateFilter">
-            日付
+          <label for="manualKana">
+            フリガナ
           </label>
 
           <input
-            type="date"
-            id="dateFilter"
+            type="text"
+            id="manualKana"
+            required
           >
 
+          <label for="manualPhone">
+            電話番号
+          </label>
+
+          <input
+            type="tel"
+            id="manualPhone"
+            required
+          >
+
+          <label for="manualEmail">
+            メールアドレス
+          </label>
+
+          <input
+            type="email"
+            id="manualEmail"
+            required
+          >
+
+          <label for="manualNotes">
+            備考
+          </label>
+
+          <textarea
+            id="manualNotes"
+            rows="4"
+          ></textarea>
 
           <button
-            type="button"
-            id="clearFilterButton"
-            class="secondary-button"
+            type="submit"
+            class="primary-button"
           >
-            検索条件をクリア
+            この内容で予約を登録
           </button>
 
-        </div>
+        </form>
 
       </section>
 
 
-      <!-- エラー -->
+      <!-- 店舗設定 -->
 
-      <p
-        id="adminError"
-        class="error-message"
-        role="alert"
-      ></p>
+      <section class="admin-card">
+
+        <h2>店舗・料金設定</h2>
+
+        <form id="settingsForm">
+
+          <label for="facilityFee">
+            施設利用料（円）
+          </label>
+
+          <input
+            type="number"
+            id="facilityFee"
+            min="0"
+            step="1"
+            required
+          >
+
+          <label for="openTime">
+            予約開始可能時間
+          </label>
+
+          <input
+            type="time"
+            id="openTime"
+            required
+          >
+
+          <label for="lastTime">
+            最終予約開始時間
+          </label>
+
+          <input
+            type="time"
+            id="lastTime"
+            required
+          >
+
+          <button
+            type="submit"
+            class="primary-button"
+          >
+            店舗設定を保存
+          </button>
+
+        </form>
+
+      </section>
 
 
-      <!-- 読み込み中 -->
+      <!-- メニュー料金設定 -->
 
-      <section
-        id="loadingSection"
-        class="admin-card hidden"
-      >
-        <p class="loading-message">
-          予約情報を読み込んでいます…
+      <section class="admin-card">
+
+        <h2>メニュー料金の変更</h2>
+
+        <p class="description">
+          変更した料金は、新規予約に
+          反映されます。
         </p>
+
+        <div
+          id="menuSettings"
+          class="menu-settings"
+        ></div>
+
+        <button
+          type="button"
+          id="saveMenus"
+          class="primary-button"
+        >
+          メニュー料金を保存
+        </button>
+
       </section>
-
-
-      <!-- 予約なし -->
-
-      <section
-        id="emptySection"
-        class="admin-card hidden"
-      >
-        <p class="empty-message">
-          条件に一致する予約はありません。
-        </p>
-      </section>
-
-
-      <!-- 予約一覧 -->
-
-      <section
-        id="reservationList"
-        class="reservation-list"
-      ></section>
 
     </section>
 
   </main>
 
 
-  <!-- =========================
-       予約詳細モーダル
-  ========================== -->
-
-  <div
-    id="reservationModal"
-    class="modal hidden"
-    aria-hidden="true"
-  >
-
-    <div class="modal-backdrop"></div>
-
-    <section
-      class="modal-content"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="modalTitle"
-    >
-
-      <div class="modal-header">
-
-        <h2 id="modalTitle">
-          予約詳細
-        </h2>
-
-        <button
-          type="button"
-          id="closeModalButton"
-          class="close-button"
-          aria-label="閉じる"
-        >
-          ×
-        </button>
-
-      </div>
-
-
-      <dl class="detail-list">
-
-        <div>
-          <dt>
-            予約ID
-          </dt>
-
-          <dd id="detailId">
-            -
-          </dd>
-        </div>
-
-        <div>
-          <dt>
-            お名前
-          </dt>
-
-          <dd id="detailName">
-            -
-          </dd>
-        </div>
-
-        <div>
-          <dt>
-            電話番号
-          </dt>
-
-          <dd id="detailPhone">
-            -
-          </dd>
-        </div>
-
-        <div>
-          <dt>
-            メールアドレス
-          </dt>
-
-          <dd id="detailEmail">
-            -
-          </dd>
-        </div>
-
-        <div>
-          <dt>
-            メニュー
-          </dt>
-
-          <dd id="detailMenu">
-            -
-          </dd>
-        </div>
-
-        <div>
-          <dt>
-            予約日
-          </dt>
-
-          <dd id="detailDate">
-            -
-          </dd>
-        </div>
-
-        <div>
-          <dt>
-            開始時間
-          </dt>
-
-          <dd id="detailTime">
-            -
-          </dd>
-        </div>
-
-        <div>
-          <dt>
-            時間
-          </dt>
-
-          <dd id="detailDuration">
-            -
-          </dd>
-        </div>
-
-        <div>
-          <dt>
-            金額
-          </dt>
-
-          <dd id="detailPrice">
-            -
-          </dd>
-        </div>
-
-        <div>
-          <dt>
-            登録日時
-          </dt>
-
-          <dd id="detailCreatedAt">
-            -
-          </dd>
-        </div>
-
-      </dl>
-
-
-      <label for="detailStatus">
-        予約状態
-      </label>
-
-      <select id="detailStatus">
-
-        <option value="pending">
-          申請中
-        </option>
-
-        <option value="confirmed">
-          確定
-        </option>
-
-        <option value="completed">
-          完了
-        </option>
-
-        <option value="cancelled">
-          キャンセル
-        </option>
-
-      </select>
-
-
-      <label for="detailMemo">
-        メモ
-      </label>
-
-      <textarea
-        id="detailMemo"
-        rows="8"
-      ></textarea>
-
-
-      <p
-        id="modalError"
-        class="error-message"
-        role="alert"
-      ></p>
-
-
-      <button
-        type="button"
-        id="saveReservationButton"
-        class="primary-button"
-      >
-        変更を保存
-      </button>
-
-      <button
-        type="button"
-        id="deleteReservationButton"
-        class="danger-button"
-      >
-        この予約を削除
-      </button>
-
-      <button
-        type="button"
-        id="cancelModalButton"
-        class="secondary-button"
-      >
-        閉じる
-      </button>
-
-    </section>
-
-  </div>
+  <footer class="admin-footer">
+    <p>Be Us｜みんなで作るジム</p>
+    <p>管理者専用ページ</p>
+  </footer>
 
 
   <!-- Supabase -->
@@ -528,7 +462,7 @@
   ></script>
 
   <script
-    src="js/admin.js?v=0.8.0"
+    src="js/admin-v0.9.js?v=0.9.0"
   ></script>
 
 </body>

@@ -1,9 +1,27 @@
+
 @charset "UTF-8";
 
 /* ========================================
-   Ver.0.7
-   トレーニング予約フォーム
+   Be Us 予約システム
+   Version 0.9.0
+   お客様用デザイン
 ======================================== */
+
+:root {
+  --navy: #142c46;
+  --navy-dark: #10253c;
+  --blue: #2872d9;
+  --blue-dark: #1958ad;
+  --light-blue: #eaf2ff;
+  --background: #f2f5f9;
+  --white: #ffffff;
+  --text: #1f2937;
+  --muted: #64748b;
+  --border: #dce4ee;
+  --orange: #f2ba66;
+  --red: #dc2626;
+  --green: #15803d;
+}
 
 * {
   box-sizing: border-box;
@@ -15,157 +33,241 @@ html {
 
 body {
   margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  background: var(--background);
   font-family:
     -apple-system,
     BlinkMacSystemFont,
     "Helvetica Neue",
     Arial,
     sans-serif;
-  color: #1f2937;
-  background: #f3f6f9;
 }
 
 button,
 input,
+select,
 textarea {
   font: inherit;
 }
 
 button {
+  cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 
 button:disabled {
+  opacity: 0.55;
   cursor: not-allowed;
-  opacity: 0.65;
 }
 
-.header {
-  padding: 44px 20px 34px;
-  color: #ffffff;
+.hidden {
+  display: none !important;
+}
+
+.wrap {
+  width: 100%;
+  max-width: 650px;
+  margin: 0 auto;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+/* ========================================
+   ヘッダー
+======================================== */
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  min-height: 290px;
+  padding: 44px 0 66px;
+  color: var(--white);
   background:
     linear-gradient(
       135deg,
-      #111827,
-      #2563eb
+      #10253c 0%,
+      #19456e 55%,
+      #2872d9 100%
     );
 }
 
-.header-inner {
-  width: 100%;
-  max-width: 520px;
-  margin: 0 auto;
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.13;
+  pointer-events: none;
+  background-image:
+    linear-gradient(
+      rgba(255, 255, 255, 0.55) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.55) 1px,
+      transparent 1px
+    );
+  background-size: 28px 28px;
 }
 
-.header h1 {
-  margin: 4px 0 8px;
-  font-size: 28px;
+.hero::after {
+  content: "";
+  position: absolute;
+  right: -75px;
+  bottom: -115px;
+  width: 270px;
+  height: 270px;
+  border: 2px solid rgba(255, 255, 255, 0.16);
+  transform: rotate(32deg);
+  pointer-events: none;
 }
 
-.header p {
+.hero .wrap {
+  position: relative;
+  z-index: 1;
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 20px;
+  color: #bfdbfe;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.eyebrow small {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 11px;
+  letter-spacing: 0;
+}
+
+.hero h1 {
   margin: 0;
+  font-size: clamp(52px, 11vw, 78px);
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -0.045em;
 }
 
-.version {
-  font-size: 13px;
+.dot {
+  color: var(--orange);
+}
+
+.lead {
+  margin: 14px 0 18px;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.hero p:not(.lead) {
+  max-width: 450px;
+  margin-top: 0;
+  font-size: 14px;
+  line-height: 1.9;
+}
+
+.hero-tag {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 9px 13px;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+  font-size: 12px;
   font-weight: 700;
-  opacity: 0.8;
 }
 
-.container {
-  width: 100%;
-  max-width: 520px;
-  margin: -18px auto 0;
-  padding: 0 16px 40px;
+/* ========================================
+   メインコンテンツ
+======================================== */
+
+main.wrap {
+  position: relative;
+  margin-top: -26px;
+  padding-bottom: 36px;
 }
 
-.booking-card,
-.confirmation {
-  padding: 22px;
-  background: #ffffff;
+.card {
+  position: relative;
+  margin-bottom: 22px;
+  padding: 26px;
+  background: var(--white);
+  border: 1px solid var(--border);
   border-radius: 18px;
   box-shadow:
-    0 12px 35px
-    rgba(15, 23, 42, 0.12);
+    0 12px 30px
+    rgba(15, 23, 42, 0.08);
 }
 
-.form-section {
-  margin-bottom: 28px;
+.card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 26px;
+  width: 55px;
+  height: 4px;
+  background: var(--blue);
+  border-radius: 0 0 6px 6px;
 }
 
-.form-section h2,
-.confirmation h2 {
-  margin: 0 0 18px;
-  font-size: 19px;
+.step {
+  margin-bottom: 9px;
+  color: var(--blue);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
 }
 
-label {
-  display: block;
-  margin: 16px 0 7px;
-  font-size: 14px;
-  font-weight: 700;
+.card h2 {
+  margin: 0 0 22px;
+  color: var(--navy);
+  font-size: 25px;
+  font-weight: 800;
 }
 
-input,
-select
-textarea {
-  width: 100%;
-  min-height: 48px;
-  padding: 12px;
-  color: #111827;
-  background: #fff;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
+.card h3 {
+  margin: 30px 0 16px;
+  padding-left: 12px;
+  color: var(--navy);
+  border-left: 4px solid var(--orange);
+  font-size: 17px;
+  font-weight: 800;
 }
 
-textarea {
-  min-height: 110px;
-  resize: vertical;
-}
-
-input:focus,
-select:focus
-textarea:focus {
-  border-color: #2563eb;
-  outline: 3px solid
-    rgba(37, 99, 235, 0.12);
-}
-
-input::placeholder,
-textarea::placeholder {
-  color: #94a3b8;
-}
-
-.input-help {
-  display: block;
-  margin-top: 7px;
-  color: #64748b;
-  font-size: 12px;
-  line-height: 1.6;
-}
+/* ========================================
+   メニュー
+======================================== */
 
 .menu-list {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .menu-card {
   display: flex;
-  gap: 12px;
   align-items: center;
-  padding: 14px;
+  gap: 14px;
   margin: 0;
+  padding: 17px;
   background: #f8fafc;
-  border: 1px solid #dbe3ee;
-  border-radius: 12px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
   cursor: pointer;
   transition:
-    border-color 0.2s ease,
-    background-color 0.2s ease,
-    transform 0.2s ease;
+    background-color 0.2s,
+    border-color 0.2s,
+    transform 0.1s;
 }
 
 .menu-card:hover {
+  background: #f0f6ff;
   border-color: #93b4f5;
 }
 
@@ -174,383 +276,371 @@ textarea::placeholder {
 }
 
 .menu-card:has(input:checked) {
-  background: #eff6ff;
-  border-color: #2563eb;
+  background: var(--light-blue);
+  border-color: var(--blue);
+  box-shadow:
+    inset 0 0 0 1px
+    rgba(40, 114, 217, 0.15);
 }
 
 .menu-card input {
   width: 22px;
+  min-width: 22px;
+  height: 22px;
   min-height: 22px;
   margin: 0;
-  accent-color: #2563eb;
+  accent-color: var(--blue);
   flex-shrink: 0;
 }
 
 .menu-card span {
   display: flex;
-  flex: 1;
+  align-items: center;
   justify-content: space-between;
+  flex: 1;
   gap: 12px;
+  min-width: 0;
 }
 
 .menu-card strong {
-  line-height: 1.5;
+  color: var(--navy);
+  font-size: 15px;
+  line-height: 1.6;
 }
 
 .menu-card small {
-  color: #2563eb;
-  font-weight: 700;
+  color: var(--blue-dark);
+  font-size: 14px;
+  font-weight: 800;
   white-space: nowrap;
 }
 
-.checkbox-row {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  padding: 14px;
-  margin-top: 18px;
-  background: #eff6ff;
-  border: 1px solid #dbeafe;
-  border-radius: 10px;
-  cursor: pointer;
-}
+/* ========================================
+   入力欄
+======================================== */
 
-.checkbox-row input {
-  width: 22px;
-  min-height: 22px;
-  margin: 0;
-  accent-color: #2563eb;
-  flex-shrink: 0;
-}
-
-.checkbox-row span {
-  flex: 1;
-}
-
-.checkbox-row small {
+label {
   display: block;
-  margin-top: 3px;
-  color: #2563eb;
-}
-
-.end-time {
-  padding: 12px;
-  margin: 12px 0 0;
-  background: #f8fafc;
-  border-radius: 10px;
-}
-
-.price-box {
-  padding: 16px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-}
-
-.price-row,
-.total-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.price-row {
-  margin-bottom: 12px;
-  font-size: 14px;
-}
-
-.price-row:last-of-type {
-  margin-bottom: 0;
-}
-
-.total-row {
-  padding-top: 15px;
-  margin-top: 15px;
-  font-size: 18px;
-  border-top: 1px solid #cbd5e1;
-}
-
-.total-row strong {
-  color: #dc2626;
-}
-
-.notice {
-  margin: 14px 2px 0;
-  color: #64748b;
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-.error-message {
-  min-height: 22px;
-  margin: 16px 0 0;
-  color: #dc2626;
+  margin: 18px 0 7px;
+  color: var(--navy);
   font-size: 14px;
   font-weight: 700;
-  line-height: 1.6;
 }
 
-.error-message:empty {
-  min-height: 0;
-  margin-top: 0;
-}
-
-.submit-button,
-.secondary-button {
+input,
+select,
+textarea {
+  display: block;
   width: 100%;
-  min-height: 52px;
-  margin-top: 14px;
-  border: 0;
-  border-radius: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  transition:
-    opacity 0.2s ease,
-    transform 0.1s ease,
-    background-color 0.2s ease;
-}
-
-.submit-button {
-  color: #ffffff;
-  background: #2563eb;
-}
-
-.submit-button:hover:not(:disabled) {
-  background: #1d4ed8;
-}
-
-.secondary-button {
-  color: #1f2937;
-  background: #e2e8f0;
-}
-
-.secondary-button:hover:not(:disabled) {
-  background: #cbd5e1;
-}
-
-.submit-button:active:not(:disabled),
-.secondary-button:active:not(:disabled) {
-  transform: scale(0.99);
-}
-
-.confirmation {
-  margin-top: 18px;
-}
-
-.confirmation dl {
-  margin: 0;
-}
-
-.confirmation dl div {
-  padding: 14px 0;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.confirmation dl div:last-child {
-  border-bottom: none;
-}
-
-.confirmation dt {
-  margin-bottom: 5px;
-  color: #64748b;
-  font-size: 12px;
-}
-
-.confirmation dd {
-  margin: 0;
-  font-weight: 700;
-  white-space: pre-line;
-  word-break: break-word;
-  overflow-wrap: anywhere;
-}
-
-.success-message {
-  padding: 14px;
-  color: #166534;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
+  min-width: 0;
+  min-height: 49px;
+  padding: 12px 13px;
+  color: var(--text);
+  background: var(--white);
+  border: 1px solid #cbd5e1;
   border-radius: 10px;
-  line-height: 1.6;
+  outline: none;
 }
 
-.success-message p {
-  margin: 0;
+textarea {
+  min-height: 100px;
+  resize: vertical;
+  line-height: 1.7;
 }
 
-.hidden {
-  display: none !important;
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--blue);
+  box-shadow:
+    0 0 0 3px
+    rgba(40, 114, 217, 0.13);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8;
+}
+
+select {
+  cursor: pointer;
+}
+
+select option:disabled {
+  color: #94a3b8;
 }
 
 /* ========================================
-   保存済み予約一覧
+   補足・終了時間
 ======================================== */
 
-.reservation-list-section {
-  margin-top: 24px;
+.hint {
+  margin: 12px 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.8;
 }
 
-.section-title-row {
+.time-box {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 16px;
-}
-
-.section-title-row h2 {
-  margin: 0;
-}
-
-.small-button {
-  padding: 10px 14px;
-  color: #1f2937;
-  background: #e9eef8;
-  border: none;
-  border-radius: 10px;
+  margin: 14px 0;
+  padding: 16px;
+  color: var(--navy);
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 11px;
   font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
 }
 
-.small-button:hover {
-  background: #dbe4f3;
-}
-
-.small-button:active {
-  transform: scale(0.98);
-}
-
-.reservation-list {
-  display: grid;
-  gap: 16px;
-}
-
-.reservation-card {
-  padding: 18px;
-  background: #ffffff;
-  border: 1px solid #dfe5ef;
-  border-radius: 16px;
-  box-shadow:
-    0 8px 24px
-    rgba(15, 23, 42, 0.06);
-}
-
-.reservation-card h3 {
-  margin: 0 0 12px;
+.time-box strong {
+  color: var(--blue-dark);
   font-size: 18px;
-  line-height: 1.5;
 }
 
-.reservation-id {
-  display: inline-block;
-  margin-bottom: 10px;
-  padding: 6px 10px;
-  color: #2457c5;
-  background: #eef4ff;
-  border-radius: 999px;
+/* ========================================
+   料金表示
+======================================== */
+
+.summary {
+  margin-top: 28px;
+  padding: 18px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+}
+
+.summary > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 9px 0;
+  font-size: 14px;
+}
+
+.summary > div b {
+  color: var(--navy);
+  font-size: 16px;
+}
+
+.summary .summary-total {
+  margin-top: 12px;
+  padding-top: 18px;
+  border-top: 1px solid #cbd5e1;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.summary .summary-total b {
+  color: var(--blue-dark);
+  font-size: 24px;
+}
+
+/* ========================================
+   エラーメッセージ
+======================================== */
+
+.error {
+  margin: 14px 0;
+  color: var(--red);
   font-size: 13px;
   font-weight: 700;
+  line-height: 1.7;
   overflow-wrap: anywhere;
 }
 
-.reservation-card dl {
-  margin: 0;
+.error:empty {
+  display: none;
 }
 
-.reservation-card dl div {
-  display: grid;
-  grid-template-columns: 110px 1fr;
-  gap: 12px;
-  padding: 8px 0;
-  border-bottom: 1px solid #edf1f6;
-}
+/* ========================================
+   ボタン
+======================================== */
 
-.reservation-card dl div:last-child {
-  border-bottom: none;
-}
-
-.reservation-card dt {
-  color: #475569;
-  font-weight: 700;
-}
-
-.reservation-card dd {
-  margin: 0;
-  color: #111827;
-  overflow-wrap: anywhere;
-}
-
-.cancel-button {
+.primary,
+.secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
-  margin-top: 16px;
-  padding: 13px 16px;
-  color: #b91c1c;
-  background: #fee2e2;
+  min-height: 52px;
+  margin-top: 14px;
+  padding: 13px 18px;
   border: none;
   border-radius: 12px;
   font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.cancel-button:hover {
-  background: #fecaca;
-}
-
-.cancel-button:active {
-  transform: scale(0.98);
-}
-
-.empty-message {
-  margin: 0;
-  padding: 18px;
-  color: #64748b;
-  background: #f4f6fa;
-  border-radius: 14px;
+  font-weight: 800;
   text-align: center;
+  transition:
+    background-color 0.2s,
+    transform 0.1s,
+    opacity 0.2s;
 }
 
-#completedBookingId {
+.primary {
+  color: var(--white);
+  background: var(--blue);
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--blue-dark);
+}
+
+.secondary {
+  color: var(--navy);
+  background: #e2e8f0;
+}
+
+.secondary:hover:not(:disabled) {
+  background: #cbd5e1;
+}
+
+.primary:active:not(:disabled),
+.secondary:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+/* ========================================
+   確認画面
+======================================== */
+
+.confirm-text {
+  padding: 18px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 2;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+#bookingId {
   display: block;
-  margin-top: 8px;
-  font-size: 24px;
+  margin: 10px 0 18px;
+  color: var(--blue-dark);
+  font-size: 22px;
   letter-spacing: 0.04em;
   overflow-wrap: anywhere;
 }
 
+#completedText {
+  padding: 16px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 11px;
+  color: #166534;
+  font-size: 14px;
+  line-height: 1.8;
+  white-space: pre-line;
+}
+
 /* ========================================
-   スマートフォン表示
+   店舗案内
 ======================================== */
 
-@media (max-width: 480px) {
-  .reservation-card dl div {
-    grid-template-columns: 1fr;
-    gap: 4px;
+.access p {
+  margin: 12px 0;
+  line-height: 1.9;
+  font-size: 14px;
+}
+
+.access strong {
+  color: var(--navy);
+  font-size: 16px;
+}
+
+.access a {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 15px;
+  padding: 12px 18px;
+  color: var(--blue-dark);
+  background: var(--light-blue);
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.access a:hover {
+  background: #dbeafe;
+}
+
+/* ========================================
+   フッター
+======================================== */
+
+footer {
+  padding: 28px 16px;
+  color: #cbd5e1;
+  background: var(--navy);
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+}
+
+/* ========================================
+   スマートフォン対応
+======================================== */
+
+@media (max-width: 600px) {
+  .hero {
+    min-height: 265px;
+    padding-top: 38px;
   }
 
-  .section-title-row {
-    align-items: flex-start;
+  .card {
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .card::before {
+    left: 20px;
+  }
+
+  .card h2 {
+    font-size: 23px;
+  }
+
+  .card h3 {
+    font-size: 16px;
+  }
+
+  .menu-card {
+    padding: 14px;
+  }
+
+  .menu-card strong {
+    font-size: 14px;
+  }
+
+  .menu-card small {
+    font-size: 13px;
   }
 }
 
 @media (max-width: 380px) {
-  .header {
-    padding:
-      38px 16px 30px;
+  .wrap {
+    padding-left: 12px;
+    padding-right: 12px;
   }
 
-  .header h1 {
-    font-size: 24px;
+  .hero h1 {
+    font-size: 50px;
   }
 
-  .container {
-    padding:
-      0 12px 32px;
+  .card {
+    padding: 16px;
   }
 
-  .booking-card,
-  .confirmation {
-    padding: 18px;
+  .card::before {
+    left: 16px;
   }
 
   .menu-card {
@@ -566,34 +656,7 @@ textarea::placeholder {
     margin-top: 4px;
   }
 
-  .price-row,
-  .total-row {
-    gap: 10px;
+  .summary .summary-total b {
+    font-size: 21px;
   }
-}
-select {
-  cursor: pointer;
-  appearance: auto;
-}
-
-.input-help {
-  display: block;
-  margin-top: 7px;
-  color: #64748b;
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-.confirmation-notice {
-  margin-bottom: 18px;
-}
-
-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.65;
-}
-
-.error-message:empty {
-  min-height: 0;
-  margin-top: 0;
 }

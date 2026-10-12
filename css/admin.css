@@ -1,0 +1,643 @@
+
+@charset "UTF-8";
+
+/* ========================================
+   Be Us 管理画面
+   Version 0.9.0
+   みんなで作るジム
+======================================== */
+
+:root {
+  --navy: #142c46;
+  --blue: #2872d9;
+  --blue-dark: #1958ad;
+  --light-blue: #eaf2ff;
+  --background: #f2f5f9;
+  --white: #ffffff;
+  --text: #1f2937;
+  --muted: #64748b;
+  --border: #dce4ee;
+  --orange: #f2ba66;
+  --red: #dc2626;
+  --green: #15803d;
+  --radius: 16px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+  color: var(--text);
+  background: var(--background);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ========================================
+   ヘッダー
+======================================== */
+
+.admin-header {
+  position: relative;
+  overflow: hidden;
+  padding: 32px 18px 44px;
+  color: var(--white);
+  background:
+    linear-gradient(
+      135deg,
+      #10253c 0%,
+      #19456e 55%,
+      #2872d9 100%
+    );
+}
+
+.admin-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.12;
+  pointer-events: none;
+  background-image:
+    linear-gradient(
+      rgba(255, 255, 255, 0.5) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.5) 1px,
+      transparent 1px
+    );
+  background-size: 26px 26px;
+}
+
+.admin-header-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.version {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  opacity: 0.8;
+}
+
+.admin-header h1 {
+  margin: 0;
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.admin-subtitle {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  opacity: 0.9;
+}
+
+/* ========================================
+   全体レイアウト
+======================================== */
+
+.admin-container {
+  position: relative;
+  width: 100%;
+  max-width: 1000px;
+  margin: -20px auto 0;
+  padding: 0 16px 48px;
+}
+
+.admin-card {
+  position: relative;
+  margin-bottom: 20px;
+  padding: 24px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow:
+    0 10px 28px
+    rgba(15, 23, 42, 0.06);
+}
+
+.admin-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 24px;
+  width: 46px;
+  height: 4px;
+  background: var(--blue);
+  border-radius: 0 0 6px 6px;
+}
+
+.admin-card h2 {
+  margin: 0 0 16px;
+  color: var(--navy);
+  font-size: 21px;
+  line-height: 1.5;
+}
+
+.admin-card h3 {
+  margin: 24px 0 12px;
+  color: var(--navy);
+  font-size: 16px;
+}
+
+.description {
+  margin: 8px 0 18px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+/* ========================================
+   入力欄
+======================================== */
+
+label {
+  display: block;
+  margin: 18px 0 7px;
+  color: var(--navy);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+input,
+select,
+textarea {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 12px 13px;
+  color: var(--text);
+  background: var(--white);
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  outline: none;
+}
+
+textarea {
+  min-height: 100px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--blue);
+  box-shadow:
+    0 0 0 3px
+    rgba(40, 114, 217, 0.13);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8;
+}
+
+/* ========================================
+   ボタン
+======================================== */
+
+.primary-button,
+.secondary-button,
+.danger-button,
+.small-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 46px;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  transition:
+    background-color 0.2s,
+    transform 0.1s,
+    opacity 0.2s;
+}
+
+.primary-button {
+  width: 100%;
+  margin-top: 18px;
+  color: var(--white);
+  background: var(--blue);
+}
+
+.primary-button:hover:not(:disabled) {
+  background: var(--blue-dark);
+}
+
+.secondary-button {
+  color: var(--navy);
+  background: #e2e8f0;
+}
+
+.secondary-button:hover:not(:disabled) {
+  background: #cbd5e1;
+}
+
+.danger-button {
+  width: 100%;
+  margin-top: 12px;
+  color: #ffffff;
+  background: var(--red);
+}
+
+.danger-button:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.small-button {
+  min-height: 38px;
+  padding: 8px 12px;
+  color: var(--blue-dark);
+  background: var(--light-blue);
+  font-size: 12px;
+}
+
+.small-button:hover:not(:disabled) {
+  background: #dbeafe;
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+#logoutButton {
+  flex-shrink: 0;
+  margin-top: 8px;
+  background: rgba(255, 255, 255, 0.95);
+}
+
+/* ========================================
+   エラーメッセージ
+======================================== */
+
+.error-message {
+  margin: 12px 0;
+  color: var(--red);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.error-message:empty {
+  display: none;
+}
+
+/* ========================================
+   セクション見出し
+======================================== */
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.section-header h2 {
+  margin-bottom: 0;
+}
+
+.month-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+#monthLabel {
+  min-width: 95px;
+  color: var(--navy);
+  font-size: 15px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* ========================================
+   予約カレンダー
+======================================== */
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 20px;
+}
+
+.cal-head {
+  padding: 8px 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.cal-head:first-child {
+  color: var(--red);
+}
+
+.cal-head:last-of-type {
+  color: var(--blue);
+}
+
+.cal-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 5px;
+  width: 100%;
+  min-width: 0;
+  min-height: 72px;
+  padding: 10px 3px;
+  color: var(--navy);
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.cal-day:hover {
+  background: var(--light-blue);
+}
+
+.cal-day.active {
+  color: var(--white);
+  background: var(--blue);
+  border-color: var(--blue);
+  box-shadow:
+    0 4px 10px
+    rgba(40, 114, 217, 0.2);
+}
+
+.cal-day.off:not(.active) {
+  background: #fff1f2;
+  border-color: #fecdd3;
+}
+
+.count {
+  display: block;
+  width: 100%;
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  overflow-wrap: anywhere;
+  line-height: 1.4;
+}
+
+.cal-day.active .count {
+  color: #eff6ff;
+}
+
+/* ========================================
+   日別の予約一覧
+======================================== */
+
+.day-list {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.day-entry {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.mini {
+  flex-shrink: 0;
+  min-height: 34px;
+  padding: 7px 12px;
+  color: var(--blue-dark);
+  background: var(--light-blue);
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mini.danger {
+  color: #b91c1c;
+  background: #fee2e2;
+  border-color: #fecaca;
+}
+
+/* ========================================
+   メニュー料金設定
+======================================== */
+
+.menu-settings {
+  display: grid;
+  gap: 12px;
+}
+
+.menu-setting {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr) minmax(100px, 160px);
+  align-items: end;
+  gap: 16px;
+  padding: 14px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.menu-setting label {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.menu-setting input {
+  min-height: 44px;
+}
+
+/* ========================================
+   ログイン画面
+======================================== */
+
+#loginSection {
+  max-width: 500px;
+  margin: 0 auto 24px;
+}
+
+#loginSection .primary-button {
+  margin-top: 22px;
+}
+
+/* ========================================
+   フッター
+======================================== */
+
+.admin-footer {
+  padding: 28px 16px;
+  color: #94a3b8;
+  background: var(--navy);
+  text-align: center;
+  font-size: 12px;
+}
+
+.admin-footer p {
+  margin: 6px 0;
+}
+
+/* ========================================
+   スマートフォン対応
+======================================== */
+
+@media (max-width: 600px) {
+
+  .admin-header {
+    padding: 30px 16px 40px;
+  }
+
+  .admin-header h1 {
+    font-size: 30px;
+  }
+
+  .admin-container {
+    padding: 0 12px 36px;
+  }
+
+  .admin-card {
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+
+  .admin-card::before {
+    left: 18px;
+  }
+
+  .admin-card h2 {
+    font-size: 18px;
+  }
+
+  .section-header {
+    align-items: flex-start;
+  }
+
+  .month-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .calendar-grid {
+    gap: 4px;
+  }
+
+  .cal-day {
+    min-height: 64px;
+    padding: 8px 2px;
+    border-radius: 7px;
+    font-size: 13px;
+  }
+
+  .count {
+    font-size: 9px;
+  }
+
+  .menu-setting {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .day-entry {
+    flex-direction: column;
+  }
+
+  .mini {
+    align-self: flex-start;
+  }
+}
+
+@media (max-width: 380px) {
+
+  .admin-header h1 {
+    font-size: 27px;
+  }
+
+  .admin-card {
+    padding: 15px;
+  }
+
+  .cal-day {
+    min-height: 58px;
+    font-size: 12px;
+  }
+
+  .count {
+    font-size: 8px;
+  }
+
+  .month-controls {
+    gap: 5px;
+  }
+
+  #monthLabel {
+    min-width: 75px;
+    font-size: 13px;
+  }
+}
