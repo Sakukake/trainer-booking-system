@@ -1,566 +1,435 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#183d78">
+  <title>Be Us | 予約</title>
+  <link rel="stylesheet" href="css/style.css?v=0.9.0">
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
+  <style>
+    /* Ver.0.9.0 補助スタイル */
+    .hidden {
+      display: none !important;
+    }
 
-  <title>トレーニング予約</title>
+    .beus-page {
+      width: min(100% - 32px, 720px);
+      margin: 0 auto;
+    }
 
-  <link
-    rel="stylesheet"
-    href="css/style.css?v=0.7.1"
-  >
+    .beus-header {
+      padding: 36px 0 24px;
+    }
+
+    .beus-header h1 {
+      margin: 8px 0;
+    }
+
+    .beus-panel {
+      margin: 16px 0 28px;
+      padding: 24px;
+      border-radius: 16px;
+      background: #fff;
+      color: #17243a;
+      box-shadow: 0 4px 20px #15284a14;
+    }
+
+    .beus-field {
+      display: grid;
+      gap: 7px;
+      margin: 18px 0;
+    }
+
+    .beus-field input,
+    .beus-field select,
+    .beus-field textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px;
+      border: 1px solid #bdc7d6;
+      border-radius: 8px;
+      font: inherit;
+      background: #fff;
+      color: #17243a;
+    }
+
+    .beus-field textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .beus-menu-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .beus-menu-list .menu-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .beus-menu-list .menu-card input {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .beus-menu-list .menu-card span {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      flex-wrap: wrap;
+    }
+
+    .beus-menu-list .menu-card small {
+      font-size: .95rem;
+    }
+
+    .beus-summary {
+      padding: 16px;
+      background: #f1f5f9;
+      border-radius: 12px;
+      margin: 20px 0;
+    }
+
+    .beus-summary p {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 8px 0;
+    }
+
+    .beus-summary .beus-total {
+      border-top: 1px solid #cbd5e1;
+      padding-top: 12px;
+      font-weight: 700;
+    }
+
+    .beus-button {
+      width: 100%;
+      padding: 14px 18px;
+      border: 0;
+      border-radius: 10px;
+      background: #215bd5;
+      color: #fff;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .beus-button:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+
+    .beus-secondary {
+      background: #e7edf5;
+      color: #17243a;
+    }
+
+    .beus-actions {
+      display: grid;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .beus-error {
+      color: #b42318;
+      min-height: 1.5em;
+      white-space: pre-wrap;
+    }
+
+    .beus-note {
+      color: #50627b;
+      font-size: .92rem;
+    }
+
+    .beus-details {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      line-height: 1.9;
+      background: #f1f5f9;
+      padding: 16px;
+      border-radius: 12px;
+    }
+
+    #loading {
+      padding: 24px 0;
+    }
+
+    #bookingId {
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+  </style>
 </head>
 
 <body>
-  <header class="header">
-    <div class="header-inner">
-      <p class="version">Ver.0.7.1</p>
 
-      <h1>トレーニング予約</h1>
-
-      <p>メニューは複数選択できます</p>
-    </div>
+  <header class="beus-header beus-page">
+    <p>Be Us 予約システム | Ver.0.9.0</p>
+    <h1>パーソナル予約</h1>
+    <p>メニューと希望日時を選択してください。</p>
   </header>
 
-  <main class="container">
+  <main class="beus-page">
 
-    <!-- ================================
-         予約入力フォーム
-    ================================= -->
+    <p id="loading" role="status">
+      読み込み準備中…
+    </p>
 
+    <!-- 予約入力フォーム -->
     <form
       id="bookingForm"
-      class="booking-card"
+      class="beus-panel hidden"
       novalidate
     >
-      <section class="form-section">
-        <h2>メニュー</h2>
+      <h2>ご予約内容</h2>
 
-        <div class="menu-list">
+      <h3>メニュー</h3>
 
-          <label class="menu-card">
-            <input
-              type="checkbox"
-              name="menu"
-              value="1000"
-              data-name="初回体験 30分"
-              data-duration="30"
-            >
+      <div
+        id="menuList"
+        class="beus-menu-list"
+        role="group"
+        aria-label="予約メニュー"
+      ></div>
 
-            <span>
-              <strong>初回体験 30分</strong>
-              <small>1,000円</small>
-            </span>
-          </label>
+      <h3>希望日時</h3>
 
-          <label class="menu-card">
-            <input
-              type="checkbox"
-              name="menu"
-              value="4000"
-              data-name="パーソナル 30分"
-              data-duration="30"
-            >
-
-            <span>
-              <strong>パーソナル 30分</strong>
-              <small>4,000円</small>
-            </span>
-          </label>
-
-          <label class="menu-card">
-            <input
-              type="checkbox"
-              name="menu"
-              value="7500"
-              data-name="パーソナル 60分"
-              data-duration="60"
-            >
-
-            <span>
-              <strong>パーソナル 60分</strong>
-              <small>7,500円</small>
-            </span>
-          </label>
-
-          <label class="menu-card">
-            <input
-              type="checkbox"
-              name="menu"
-              value="3000"
-              data-name="マッサージ 30分"
-              data-duration="30"
-            >
-
-            <span>
-              <strong>マッサージ 30分</strong>
-              <small>3,000円</small>
-            </span>
-          </label>
-
-        </div>
-      </section>
-
-      <section class="form-section">
-        <h2>希望日時</h2>
-
-        <label for="date">
-          希望日
-        </label>
-
+      <label class="beus-field" for="date">
+        <span>希望日 <strong>必須</strong></span>
         <input
-          type="date"
           id="date"
+          name="date"
+          type="date"
           required
         >
+      </label>
 
-        <label for="time">
-          開始時間
-        </label>
-
+      <label class="beus-field" for="time">
+        <span>開始時間 <strong>必須</strong></span>
         <select
           id="time"
+          name="time"
           required
+          disabled
         >
           <option value="">
-            開始時間を選択してください
+            メニューと日付を選択してください
           </option>
         </select>
+      </label>
 
-        <small class="input-help">
-          開始時間は00分・15分・30分・45分から選択できます。
-        </small>
+      <p
+        id="availabilityMessage"
+        class="beus-note"
+        role="status"
+        aria-live="polite"
+      ></p>
 
-        <p class="end-time">
-          終了予定：
-          <strong id="estimatedEnd">
-            未選択
-          </strong>
+      <p>
+        終了予定：
+        <strong id="endTime">未選択</strong>
+      </p>
+
+      <!-- 料金 -->
+      <div
+        class="beus-summary"
+        aria-label="料金の目安"
+      >
+        <p>
+          <span>メニュー料金</span>
+          <span id="menuPrice">0円</span>
         </p>
 
-        <label class="checkbox-row">
-          <input
-            type="checkbox"
-            id="rentalGym"
-          >
+        <p>
+          <span>施設利用料</span>
+          <span id="facilityFee">0円</span>
+        </p>
 
-          <span>
-            レンタルジムを利用する
-            <small>＋1,500円</small>
-          </span>
-        </label>
-      </section>
+        <p class="beus-total">
+          <span>合計予定金額</span>
+          <span id="totalPrice">0円</span>
+        </p>
+      </div>
 
-      <section class="form-section">
-        <h2>お客様情報</h2>
+      <h3>お客様情報</h3>
 
-        <label for="name">
-          お名前
-        </label>
-
+      <label class="beus-field" for="name">
+        <span>お名前 <strong>必須</strong></span>
         <input
-          type="text"
           id="name"
-          placeholder="例：山田 太郎"
-          autocomplete="name"
-          required
-        >
-
-        <label for="kana">
-          フリガナ
-        </label>
-
-        <input
+          name="name"
           type="text"
-          id="kana"
-          placeholder="例：ヤマダ タロウ"
+          autocomplete="name"
+          maxlength="100"
           required
         >
+      </label>
 
-        <label for="phone">
-          電話番号
-        </label>
-
+      <label class="beus-field" for="kana">
+        <span>
+          フリガナ（カタカナ）
+          <strong>必須</strong>
+        </span>
         <input
-          type="tel"
+          id="kana"
+          name="kana"
+          type="text"
+          maxlength="100"
+          required
+        >
+      </label>
+
+      <label class="beus-field" for="phone">
+        <span>電話番号 <strong>必須</strong></span>
+        <input
           id="phone"
-          placeholder="例：09012345678"
+          name="phone"
+          type="tel"
           inputmode="tel"
           autocomplete="tel"
           required
         >
+      </label>
 
-        <label for="email">
+      <label class="beus-field" for="email">
+        <span>
           メールアドレス
-        </label>
-
+          <strong>必須</strong>
+        </span>
         <input
-          type="email"
           id="email"
-          placeholder="例：yamada@example.com"
+          name="email"
+          type="email"
           autocomplete="email"
           required
         >
+      </label>
 
-        <label for="notes">
-          ご要望・連絡事項
-        </label>
-
+      <label class="beus-field" for="notes">
+        <span>ご要望・備考（任意）</span>
         <textarea
           id="notes"
-          rows="4"
-          placeholder="例：肩の状態を相談したい"
+          name="notes"
+          maxlength="2000"
         ></textarea>
-      </section>
-
-      <!-- 料金表示 -->
-
-      <section class="price-box">
-        <div class="price-row">
-          <span>メニュー料金</span>
-
-          <strong id="menuPrice">
-            0円
-          </strong>
-        </div>
-
-        <div class="price-row">
-          <span>時間外料金</span>
-
-          <strong id="extraTimePrice">
-            0円
-          </strong>
-        </div>
-
-        <div class="price-row">
-          <span>レンタルジム</span>
-
-          <strong id="rentalPrice">
-            0円
-          </strong>
-        </div>
-
-        <div class="price-row">
-          <span>合計時間</span>
-
-          <strong id="totalDuration">
-            0分
-          </strong>
-        </div>
-
-        <div class="total-row">
-          <span>合計予定金額</span>
-
-          <strong id="totalPrice">
-            0円
-          </strong>
-        </div>
-      </section>
-
-      <p class="notice">
-        10:00より前、または21:00以降の開始は、
-        時間外料金として500円が加算されます。
-      </p>
-
-      <p class="notice">
-        レンタルジムを利用する予約は、
-        ジム確保後に予約確定となります。
-      </p>
-
-      <p class="notice">
-        Ver.0.7.1では予約情報を、
-        このブラウザ内に保存します。
-      </p>
+      </label>
 
       <p
-        id="errorMessage"
-        class="error-message"
+        id="formError"
+        class="beus-error"
         role="alert"
-        aria-live="polite"
+        aria-live="assertive"
       ></p>
 
       <button
+        class="beus-button"
         type="submit"
-        class="submit-button"
       >
         予約内容を確認する
       </button>
     </form>
 
-    <!-- ================================
-         予約確認画面
-    ================================= -->
-
+    <!-- 予約確認画面 -->
     <section
       id="confirmation"
-      class="confirmation hidden"
-      aria-labelledby="confirmationTitle"
+      class="beus-panel hidden"
+      aria-labelledby="confirmationHeading"
     >
-      <h2 id="confirmationTitle">
-        予約申請内容
+      <h2 id="confirmationHeading">
+        予約内容の確認
       </h2>
 
-      <p class="notice confirmation-notice">
+      <p>
         内容をご確認のうえ、
-        「この内容で予約申請する」を押してください。
-      </p>
-
-      <dl>
-        <div>
-          <dt>メニュー</dt>
-
-          <dd id="confirmMenus">
-            -
-          </dd>
-        </div>
-
-        <div>
-          <dt>希望日時</dt>
-
-          <dd id="confirmDateTime">
-            -
-          </dd>
-        </div>
-
-        <div>
-          <dt>終了予定</dt>
-
-          <dd id="confirmEndTime">
-            -
-          </dd>
-        </div>
-
-        <div>
-          <dt>お名前</dt>
-
-          <dd id="confirmName">
-            -
-          </dd>
-        </div>
-
-        <div>
-          <dt>フリガナ</dt>
-
-          <dd id="confirmKana">
-            -
-          </dd>
-        </div>
-
-        <div>
-          <dt>電話番号</dt>
-
-          <dd id="confirmPhone">
-            -
-          </dd>
-        </div>
-
-        <div>
-          <dt>メールアドレス</dt>
-
-          <dd id="confirmEmail">
-            -
-          </dd>
-        </div>
-
-        <div>
-          <dt>レンタルジム</dt>
-
-          <dd id="confirmRental">
-            -
-          </dd>
-        </div>
-
-        <div>
-          <dt>ご要望・連絡事項</dt>
-
-          <dd id="confirmNotes">
-            -
-          </dd>
-        </div>
-
-        <div>
-          <dt>メニュー料金</dt>
-
-          <dd id="confirmMenuPrice">
-            0円
-          </dd>
-        </div>
-
-        <div>
-          <dt>時間外料金</dt>
-
-          <dd id="confirmExtraTimePrice">
-            0円
-          </dd>
-        </div>
-
-        <div>
-          <dt>レンタルジム料金</dt>
-
-          <dd id="confirmRentalPrice">
-            0円
-          </dd>
-        </div>
-
-        <div>
-          <dt>合計時間</dt>
-
-          <dd id="confirmDuration">
-            0分
-          </dd>
-        </div>
-
-        <div>
-          <dt>合計予定金額</dt>
-
-          <dd id="confirmTotal">
-            0円
-          </dd>
-        </div>
-      </dl>
-
-      <p
-        id="confirmationErrorMessage"
-        class="error-message"
-        role="alert"
-        aria-live="polite"
-      ></p>
-
-      <button
-        type="button"
-        id="submitRequestButton"
-        class="submit-button"
-      >
-        この内容で予約申請する
-      </button>
-
-      <button
-        type="button"
-        id="editButton"
-        class="secondary-button"
-      >
-        入力内容を修正する
-      </button>
-    </section>
-
-    <!-- ================================
-         予約完了画面
-    ================================= -->
-
-    <section
-      id="completed"
-      class="confirmation hidden"
-      aria-labelledby="completedTitle"
-    >
-      <h2 id="completedTitle">
-        予約申請を受け付けました
-      </h2>
-
-      <div class="success-message">
-        <p>予約番号</p>
-
-        <strong id="completedBookingId">
-          -
-        </strong>
-      </div>
-
-      <dl>
-        <div>
-          <dt>予約日時</dt>
-
-          <dd id="completedDateTime">
-            -
-          </dd>
-        </div>
-
-        <div>
-          <dt>終了予定</dt>
-
-          <dd id="completedEndTime">
-            -
-          </dd>
-        </div>
-
-        <div>
-          <dt>メニュー</dt>
-
-          <dd id="completedMenus">
-            -
-          </dd>
-        </div>
-
-        <div>
-          <dt>合計予定金額</dt>
-
-          <dd id="completedTotal">
-            -
-          </dd>
-        </div>
-      </dl>
-
-      <p class="notice">
-        予約内容をこのブラウザに保存しました。
-      </p>
-
-      <button
-        type="button"
-        id="newBookingButton"
-        class="secondary-button"
-      >
-        新しい予約を入力する
-      </button>
-
-      <button
-        type="button"
-        id="showReservationsButton"
-        class="secondary-button"
-      >
-        保存済み予約を確認する
-      </button>
-    </section>
-
-    <!-- ================================
-         保存済み予約一覧
-    ================================= -->
-
-    <section
-      id="reservationListSection"
-      class="booking-card reservation-list-section"
-    >
-      <div class="section-title-row">
-        <h2>保存済み予約</h2>
-
-        <button
-          type="button"
-          id="refreshReservationsButton"
-          class="small-button"
-        >
-          更新
-        </button>
-      </div>
-
-      <p
-        id="emptyReservationMessage"
-        class="empty-message"
-      >
-        保存済みの予約はありません。
+        予約を確定してください。
       </p>
 
       <div
-        id="reservationList"
-        class="reservation-list"
+        id="confirmationText"
+        class="beus-details"
       ></div>
+
+      <p
+        id="confirmError"
+        class="beus-error"
+        role="alert"
+        aria-live="assertive"
+      ></p>
+
+      <div class="beus-actions">
+        <button
+          id="confirmButton"
+          class="beus-button"
+          type="button"
+        >
+          この内容で予約する
+        </button>
+
+        <button
+          id="backButton"
+          class="beus-button beus-secondary"
+          type="button"
+        >
+          入力画面に戻る
+        </button>
+      </div>
+    </section>
+
+    <!-- 予約完了画面 -->
+    <section
+      id="completed"
+      class="beus-panel hidden"
+      aria-labelledby="completedHeading"
+    >
+      <h2 id="completedHeading">
+        予約を受け付けました
+      </h2>
+
+      <p>
+        予約番号：
+        <span id="bookingId"></span>
+      </p>
+
+      <div
+        id="completedText"
+        class="beus-details"
+      ></div>
+
+      <p class="beus-note">
+        予約内容を控えておいてください。
+      </p>
+
+      <button
+        id="newButton"
+        class="beus-button"
+        type="button"
+      >
+        新しい予約をする
+      </button>
     </section>
 
   </main>
 
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase-config.js?v=0.8.0"></script>
-  <script src="js/script.js?v=0.8.0"></script>
+
+  <!-- 接続設定 -->
+  <script src="js/supabase-config.js?v=0.9.0"></script>
+
+  <!-- お客様用予約処理 -->
+  <script src="js/script.js?v=0.9.0"></script>
+
 </body>
 </html>
