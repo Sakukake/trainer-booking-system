@@ -739,7 +739,7 @@ $("bookingForm").addEventListener(
 async function registerBooking(reservation) {
   const { data, error } =
     await supabaseClient.rpc(
-      "beus_create_booking"_with_link",
+      "beus_create_booking_with_link",
       {
         p_menu_id: reservation.menuId,
         p_date: reservation.date,
