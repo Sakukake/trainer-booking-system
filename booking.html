@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>予約確認・キャンセル | Be Us</title>
+  <link rel="stylesheet" href="css/style.css?v=0.9.1">
+</head>
+<body>
+  <main class="beus-page">
+    <section class="beus-panel">
+      <h1>Be Us</h1>
+      <h2>予約確認・キャンセル</h2>
+
+      <p id="bookingStatus" aria-live="polite">
+        予約情報を読み込んでいます...
+      </p>
+
+      <div id="bookingDetails" class="beus-details" hidden>
+        <p><strong>予約番号：</strong><span id="detailId"></span></p>
+        <p><strong>メニュー：</strong><span id="detailMenu"></span></p>
+        <p><strong>予約日：</strong><span id="detailDate"></span></p>
+        <p><strong>開始時刻：</strong><span id="detailTime"></span></p>
+        <p><strong>終了予定：</strong><span id="detailEnd"></span></p>
+        <p><strong>料金：</strong><span id="detailPrice"></span></p>
+        <p><strong>予約状況：</strong><span id="detailStatus"></span></p>
+      </div>
+
+      <div id="cancelArea" hidden>
+        <p class="beus-note">
+          キャンセルは予約開始24時間前まで可能です。
+        </p>
+        <button
+          id="cancelBookingButton"
+          class="beus-button"
+          type="button"
+        >
+          この予約をキャンセルする
+        </button>
+      </div>
+
+      <p id="cancelMessage" aria-live="polite"></p>
+
+      <a href="index.html">予約トップに戻る</a>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/booking-detail.js?v=0.9.1"></script>
+</body>
+</html>

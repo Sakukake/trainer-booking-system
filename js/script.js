@@ -739,7 +739,7 @@ $("bookingForm").addEventListener(
 async function registerBooking(reservation) {
   const { data, error } =
     await supabaseClient.rpc(
-      "beus_create_booking",
+      "beus_create_booking"_with_link",
       {
         p_menu_id: reservation.menuId,
         p_date: reservation.date,
@@ -796,8 +796,20 @@ $("confirmButton").addEventListener(
     try {
       const reservation = state.pending;
 
-      const bookingId =
-        await registerBooking(reservation);
+      const bookingResult =
+  await registerBooking(reservation);
+
+if (
+  !bookingResult?.booking_id ||
+  !/^[0-9a-f]{64}$/.test(bookingResult.token || "")
+) {
+  throw new Error(
+    "予約確認リンクを取得できませんでした。"
+  );
+}
+
+const bookingId = bookingResult.booking_id;
+const bookingToken = bookingResult.token;
 
       $("bookingId").textContent =
         `#${bookingId}`;
@@ -810,7 +822,19 @@ $("confirmButton").addEventListener(
           `終了予定：${reservation.endTime}`,
           `合計予定金額：${yen(reservation.totalPrice)}`
         ].join("\n");
+const bookingUrl = new URL(
+  "booking.html",
+  window.location.href
+);
 
+bookingUrl.searchParams.set(
+  "token",
+  bookingToken
+);
+
+$("bookingLink").value = bookingUrl.toString();
+$("bookingLinkBox").hidden = false;
+$("copyLinkMessage").textContent = "";
       state.pending = null;
 
       showSection("completed");
@@ -961,5 +985,27 @@ async function initializeBeUs() {
       "現在、予約画面を読み込めません。時間をおいて再度お試しください。";
   }
 }
+$("copyBookingLink").addEventListener(
+  "click",
+  async () => {
+    const link = $("bookingLink").value;
 
+    if (!link) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(link);
+
+      $("copyLinkMessage").textContent =
+        "予約確認リンクをコピーしました。";
+    } catch (error) {
+      $("bookingLink").focus();
+      $("bookingLink").select();
+
+      $("copyLinkMessage").textContent =
+        "リンクを選択しました。コピーしてください。";
+    }
+  }
+);
 initializeBeUs();

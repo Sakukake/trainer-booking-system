@@ -410,6 +410,38 @@
       <p class="beus-note">
         予約内容を控えておいてください。
       </p>
+      <div class="beus-details" id="bookingLinkBox" hidden>
+  <p>
+    <strong>お客様専用の予約確認リンク</strong>
+  </p>
+
+  <p>
+    このリンクから予約内容の確認と、
+    開始24時間前までのキャンセルができます。
+  </p>
+
+  <input
+    id="bookingLink"
+    type="text"
+    readonly
+    aria-label="予約確認リンク"
+  >
+
+  <button
+    id="copyBookingLink"
+    class="beus-button"
+    type="button"
+  >
+    予約確認リンクをコピー
+  </button>
+
+  <p id="copyLinkMessage" aria-live="polite"></p>
+
+  <p class="beus-note">
+    このリンクは第三者に共有せず、
+    必ず保存してください。
+  </p>
+</div>
 
       <button
         id="newButton"
