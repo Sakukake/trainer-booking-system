@@ -660,3 +660,82 @@ footer {
     font-size: 21px;
   }
 }
+/* ==========================================
+   Be Us 予約確認・キャンセルページ
+   Ver.0.9.1
+========================================== */
+
+body:has(#bookingStatus) {
+  background: #f3f6fc;
+}
+
+body:has(#bookingStatus) .beus-page {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 32px 16px 56px;
+}
+
+body:has(#bookingStatus) .beus-panel {
+  background: #ffffff;
+  border: 1px solid #e0e7f2;
+  border-radius: 20px;
+  padding: 28px 22px;
+  box-shadow: 0 8px 28px rgba(25, 45, 85, 0.08);
+}
+
+body:has(#bookingStatus) h1 {
+  color: #244ca3;
+  font-size: 28px;
+  margin: 0 0 12px;
+}
+
+body:has(#bookingStatus) h2 {
+  font-size: 22px;
+  margin-bottom: 20px;
+}
+
+body:has(#bookingStatus) #bookingDetails {
+  display: grid;
+  gap: 12px;
+  margin: 24px 0;
+}
+
+body:has(#bookingStatus) #bookingDetails p {
+  margin: 0;
+  padding: 12px 14px;
+  background: #f6f8fd;
+  border-radius: 10px;
+  line-height: 1.7;
+}
+
+body:has(#bookingStatus) #bookingStatus {
+  line-height: 1.7;
+  font-weight: 600;
+}
+
+body:has(#bookingStatus) #cancelBookingButton {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  background: #d64545;
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+body:has(#bookingStatus) #cancelBookingButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+body:has(#bookingStatus) .beus-note {
+  line-height: 1.8;
+}
+
+@media (max-width: 480px) {
+  body:has(#bookingStatus) .beus-panel {
+    padding: 22px 16px;
+  }
+}
