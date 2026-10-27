@@ -161,7 +161,23 @@
       padding: 16px;
       border-radius: 12px;
     }
+/* 予約完了画面のリンク欄だけ余白を調整 */
+#bookingLinkBox {
+  white-space: normal;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 
+#bookingLinkBox p {
+  margin: 0;
+}
+
+#bookingLinkBox input,
+#bookingLinkBox button {
+  width: 100%;
+  box-sizing: border-box;
+}
     #loading {
       padding: 24px 0;
     }
