@@ -153,12 +153,12 @@ function renderCalendar() {
     b.textContent = day;
 
     const sub = document.createElement("span");
-    sub.className = "count";
-    sub.textContent =
-      (count ? `${count}件` : "") +
-      (blocksForDay(d).length ? " ▪" : "");
+sub.className = "count";
+sub.textContent =
+  (count ? `${count}件` : "") +
+  (blocksForDay(d).length ? "■" : "");
 
-    b.append(sub);
+    b.sappend(sub);
 
     b.onclick = () => {
       s.day = d;
@@ -177,7 +177,10 @@ function renderDay() {
   list.replaceChildren();
 
   const items = s.reservations
-    .filter(x => x.reservation_date === s.day)
+  .filter(x =>
+  x.reservation_date === s.day &&
+  x.status !== "cancelled"
+)
     .sort((a, b) =>
       a.reservation_time.localeCompare(b.reservation_time)
     );
@@ -190,13 +193,31 @@ function renderDay() {
     const el = document.createElement("div");
     el.className = "day-entry";
 
-    el.append(
-      escapeText(
-        `${r.reservation_time} / ${r.duration}分 / ` +
-        `${r.customer_name} / ${r.menu} / ` +
-        `${yen(r.price)} / ${statusName(r.status)}`
-      )
-    );
+    const details = document.createElement("div");
+details.className = "reservation-card-details";
+
+const addDetail = (label, value) => {
+  const row = document.createElement("div");
+  row.className = "reservation-detail-row";
+
+  const title = document.createElement("strong");
+  title.textContent = label;
+
+  const content = document.createElement("span");
+  content.textContent = String(value ?? "—");
+
+  row.append(title, content);
+  details.append(row);
+};
+
+addDetail("予約番号", `#${r.id}`);
+addDetail("予約時間", `${r.reservation_time}〜（${r.duration}分）`);
+addDetail("お客様名", r.customer_name);
+addDetail("メニュー", r.menu);
+addDetail("料金", yen(r.price));
+addDetail("予約状況", statusName(r.status));
+
+el.append(details);
 
     const btn = document.createElement("button");
     btn.className = "mini";
