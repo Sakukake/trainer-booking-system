@@ -158,7 +158,7 @@ sub.textContent =
   (count ? `${count}件` : "") +
   (blocksForDay(d).length ? "■" : "");
 
-    b.sappend(sub);
+    b.append(sub);
 
     b.onclick = () => {
       s.day = d;
