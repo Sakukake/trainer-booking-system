@@ -680,3 +680,28 @@ button:active:not(:disabled) {
     text-align: left;
   }
 }
+/* 予約カードの横幅を調整 */
+.day-list .day-entry {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.day-list .day-entry .reservation-card-details {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  align-items: stretch;
+}
+
+.day-list .day-entry .reservation-detail-row {
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 480px) {
+  .day-list .day-entry .reservation-detail-row {
+    flex-direction: column;
+  }
+}
