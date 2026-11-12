@@ -211,10 +211,17 @@ const addDetail = (label, value) => {
 };
 
 addDetail("予約番号", `#${r.id}`);
-addDetail("予約時間", `${r.reservation_time}〜（${r.duration}分）`);
+addDetail(
+  "予約時間",
+  `${r.reservation_time}〜${new Date(
+    new Date(`2000-01-01T${r.reservation_time}`).getTime() +
+    Number(r.duration) * 60000
+  ).toTimeString().slice(0, 5)}（${r.duration}分）`
+);
 addDetail("お客様名", r.customer_name);
 addDetail("メニュー", r.menu);
 addDetail("料金", yen(r.price));
+addDetail("備考・メモ", r.memo?.trim() || "なし");
 addDetail("予約状況", statusName(r.status));
 
 el.append(details);
