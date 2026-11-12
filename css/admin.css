@@ -673,6 +673,7 @@ button:active:not(:disabled) {
   .reservation-detail-row {
     flex-direction: column;
     gap: 4px;
+    width: 100%;
   }
 
   .reservation-detail-row span {
