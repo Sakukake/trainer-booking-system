@@ -218,7 +218,10 @@ addDetail(
     Number(r.duration) * 60000
   ).toTimeString().slice(0, 5)}（${r.duration}分）`
 );
-addDetail("お客様名", r.customer_name);
+addDetail(
+  "お客様名",
+  `${r.customer_name}${r.customer_kana ? `（${r.customer_kana}）` : ""}`
+);
 addDetail("メニュー", r.menu);
 addDetail("料金", yen(r.price));
 addDetail("備考・メモ", r.memo?.trim() || "なし");
@@ -235,7 +238,6 @@ el.append(details);
         "状態：pending / confirmed / completed / cancelled",
         r.status
       );
-
       if (status === null) return;
 
       if (![
